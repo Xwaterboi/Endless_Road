@@ -219,7 +219,7 @@ def main ():
             print (f'average score last 10 games: {avg} ')
             avg = 0
 
-        if epoch % 10000 == 0 and epoch > 0:
+        if epoch % 1000 == 0 and epoch > 0:
             checkpoint = {
                 'epoch': epoch,
                 'model_state_dict': player.dqn_model.state_dict(),
