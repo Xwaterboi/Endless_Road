@@ -161,34 +161,33 @@ def main ():
     
             ############## Train ################
             states, actions, rewards, next_states, dones = buffer.sample(batch_size)
-            # Q_values = player.Q(states, actions)
-            # next_actions, Q_hat_Values = player_hat.get_Actions_Values(next_states) # DDQN
-
-            # loss = player.dqn_model.loss(Q_values, rewards, Q_hat_Values, dones)
-            # loss.backward()
-            # optim.step()
-            # optim.zero_grad()
-            # scheduler.step()
+            Q_values = player.Q(states, actions)
+            next_actions, Q_hat_Values = player_hat.get_Actions_Values(next_states) # DDQ
+            loss = player.dqn_model.loss(Q_values, rewards, Q_hat_Values, dones)
+            loss.backward()
+            optim.step()
+            optim.zero_grad()
+            scheduler.step()
 
             #this is so the gpu will be faster, and also cpu will be compatible
-            if scaler is not None:
-                with torch.amp.autocast('cuda'):
-                    Q_values = player.Q(states, actions)
-                    next_actions, Q_hat_Values = player_hat.get_Actions_Values(next_states)#ddqn
-                    loss = player.dqn_model.loss(Q_values, rewards, Q_hat_Values, dones)
-                scaler.scale(loss).backward()
-                scaler.step(optim)
-                scaler.update()
-                optim.zero_grad()
-                scheduler.step()
-            else:
-                Q_values = player.Q(states, actions)
-                next_actions, Q_hat_Values = player_hat.get_Actions_Values(next_states)
-                loss = player.dqn_model.loss(Q_values, rewards, Q_hat_Values, dones)
-                loss.backward()
-                optim.step()
-                optim.zero_grad()
-                scheduler.step()
+            # if scaler is not None:
+            #     with torch.amp.autocast('cuda'):
+            #         Q_values = player.Q(states, actions)
+            #         next_actions, Q_hat_Values = player_hat.get_Actions_Values(next_states)#ddqn
+            #         loss = player.dqn_model.loss(Q_values, rewards, Q_hat_Values, dones)
+            #     scaler.scale(loss).backward()
+            #     scaler.step(optim)
+            #     scaler.update()
+            #     optim.zero_grad()
+            #     scheduler.step()
+            # else:
+            #     Q_values = player.Q(states, actions)
+            #     next_actions, Q_hat_Values = player_hat.get_Actions_Values(next_states)
+            #     loss = player.dqn_model.loss(Q_values, rewards, Q_hat_Values, dones)
+            #     loss.backward()
+            #     optim.step()
+            #     optim.zero_grad()
+            #     scheduler.step()
 
         if epoch % C == 0:
             # player_hat.dqn_model.load_state_dict(player.dqn_model.state_dict())
