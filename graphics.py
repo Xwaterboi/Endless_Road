@@ -147,7 +147,3 @@ class Background:
             if mouse_pressed[0]:  # Left click
                 pygame.quit()
                 exit()  # Call the quit callback function
-
-            
-    
-    

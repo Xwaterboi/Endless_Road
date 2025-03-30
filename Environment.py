@@ -119,7 +119,7 @@ class Environment:
         prev_lane=self.car.lane
         self.move(action=action)
         if self.car.lane != prev_lane:
-            self.reward=self.reward-0#car change lane reward
+            self.reward=self.reward-0.1#car change lane reward
         self.add_obstacle()
         self.add_coins()
         
