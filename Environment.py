@@ -106,19 +106,22 @@ class Environment:
         Obstacles_In_Lane=[]
         for obstacle in self.obstacles_group:
             if obstacle.lane == lane:
-                Obstacles_In_Lane.append(obstacle.rect.y)
+                Obstacles_In_Lane.append(obstacle)
         if not Obstacles_In_Lane:  # If no obstacles in lane
             closest_obstacle = 0
             reward=0.1
         else:
-            closest_obstacle = min(Obstacles_In_Lane)
+            for obstacle in Obstacles_In_Lane:
+                obstacle=obstacle.rect.y
+            closest_obstacle = min(Obstacles_In_Lane)##needs fixing
         for good_point in self.good_points_group:
-            if good_point.rect.y>closest_obstacle:# i put > because as the good point goes down, her y goes up. 
+            if (good_point.lane) == lane  and good_point.rect.y>closest_obstacle:# i put > because as the good point goes down, her y goes up. 
                 reward+=0.33#need to expirment with this value
         return reward
     
     def update (self,action):
         self.reward=0
+        self.reward+=self.Lane_Reward(self.car.lane)
         prev_lane=self.car.lane
         self.move(action=action)
         if self.car.lane != prev_lane:
@@ -132,7 +135,7 @@ class Environment:
         self.obstacles_group.update()
         self.good_points_group.update()
         ###
-        self.reward+=self.Lane_Reward(self.car.lane)
+        
         if(self.AddGood()):self.reward+=7#coin reward
         if not self.car_colide():return (True,-5)#lose reward
         ### Remove off screen obstacles and coins
