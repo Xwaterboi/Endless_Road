@@ -13,7 +13,7 @@ import os
 def main ():
 
     pygame.init()
-    # wandb.login( key="4cd7380ddbf2a422da7b1fbc5bbd88db2ec50cd2" )
+    
     
     
     #CONSTS
