@@ -27,19 +27,21 @@ def main ():
     env = Environment()
     background.render(env)
     best_score = 0
-    if torch.cuda.is_available():
-        torch.backends.cudnn.benchmark = True
-        device = torch.device('cuda')
-        print("CUDA")
-        scaler = torch.amp.GradScaler('cuda')
-    else:
-        device = torch.device('cpu')
-        print("CPU")
-        scaler = None
+    # if torch.cuda.is_available():
+    #     torch.backends.cudnn.benchmark = True
+    #     device = torch.device('cuda')
+    #     print("CUDA")
+    #     scaler = torch.amp.GradScaler('cuda')
+    # else:
+    device = torch.device('cpu')
+    print("CPU")
+    scaler = None
     
     ####### params and models ############
     dqn_model = DQN(device=device)
-    # dqn_model.load_params(MODEL_PATH)
+    # Comment out this line if starting fresh training and uncomment the next line
+    dqn_model.load_params(MODEL_PATH)
+    #dqn_model.save_params(MODEL_PATH)
     print("Model loaded successfully!")
     player = AI_Agent(dqn_model,device=device)
     player_hat = AI_Agent(dqn_model,device=device)
@@ -54,12 +56,12 @@ def main ():
     avg = 0
     scores, losses, avg_score = [], [], []
     optim = torch.optim.Adam(player.dqn_model.parameters(), lr=learning_rate)
-    # scheduler = torch.optim.lr_scheduler.StepLR(optim,100000, gamma=0.50)
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optim,[5000*1000, 10000*1000, 15000*1000, 20000*1000, 25000*1000, 30000*1000], gamma=0.5)
+    scheduler = torch.optim.lr_scheduler.StepLR(optim,1000*1000, gamma=0.50)
+    #scheduler = torch.optim.lr_scheduler.MultiStepLR(optim,[5000*1000, 10000*1000, 15000*1000, 20000*1000, 25000*1000, 30000*1000], gamma=0.5)
     step = 0
 
     ######### checkpoint Load ############
-    num = 21
+    num = 23
     checkpoint_path = f"Data/checkpoint{num}.pth"
     buffer_path = f"Data/buffer{num}.pth"
     resume_wandb = False
@@ -90,7 +92,8 @@ def main ():
         "name": f"Endless_Road {num}",
         "checkpoint": checkpoint_path,
         "learning_rate": learning_rate,
-        "Schedule": f'{str(scheduler.milestones)} gamma={str(scheduler.gamma)}',
+        #"Schedule": f'{str(scheduler.milestones)} gamma={str(scheduler.gamma)}',
+        #"Schedule": f'step_size={str(scheduler.step_size)} gamma={str(scheduler.gamma)}',
         "epochs": ephocs,
         "start_epoch": start_epoch,
         "decay": 50,
@@ -165,6 +168,7 @@ def main ():
             next_actions, Q_hat_Values = player_hat.get_Actions_Values(next_states) # DDQ
             loss = player.dqn_model.loss(Q_values, rewards, Q_hat_Values, dones)
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(player.dqn_model.parameters(), max_norm=1.0)
             optim.step()
             optim.zero_grad()
             scheduler.step()
