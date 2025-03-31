@@ -58,6 +58,9 @@ def main ():
     optim = torch.optim.Adam(player.dqn_model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.StepLR(optim,1000*1000, gamma=0.50)
     #scheduler = torch.optim.lr_scheduler.MultiStepLR(optim,[5000*1000, 10000*1000, 15000*1000, 20000*1000, 25000*1000, 30000*1000], gamma=0.5)
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optim, 
+        milestones=[1000, 2000, 4000, 8000, 16000,32000,48000,64000,80000,96000,112000,128000,144000,160000 ], 
+        gamma=0.6)
     step = 0
 
     ######### checkpoint Load ############
@@ -171,7 +174,7 @@ def main ():
             torch.nn.utils.clip_grad_norm_(player.dqn_model.parameters(), max_norm=1.0)
             optim.step()
             optim.zero_grad()
-            scheduler.step()
+            
 
             #this is so the gpu will be faster, and also cpu will be compatible
             # if scaler is not None:
@@ -192,7 +195,8 @@ def main ():
             #     optim.step()
             #     optim.zero_grad()
             #     scheduler.step()
-
+        #after game ends, step.
+        scheduler.step()
         if epoch % C == 0:
             # player_hat.dqn_model.load_state_dict(player.dqn_model.state_dict())
             player_hat.fix_update(dqn=player.dqn_model)
