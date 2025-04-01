@@ -5,7 +5,6 @@ class Environment:
         self.car = Car(2)
         self.obstacles_group = pygame.sprite.Group()
         self.good_points_group= pygame.sprite.Group()
-        #self.spawn_timer = 0
         self.score=0
         GoodPoint.indecis = [None] * 5
 
@@ -26,9 +25,9 @@ class Environment:
     def Max_obstacle_check(self):
         """Checks if there are more than 10 obstacles in the game."""
         if len(self.obstacles_group) >= 4:
-            return True  # More than 10 obstacles exist
+            return True  # More than 4 obstacles exist
         else:
-            return False # 10 or fewer obstacles exist
+            return False # 4 or fewer obstacles exist
             
     def Max_GoodPoints_check(self):
         """Checks if there are more than 10 good points in the game."""
@@ -38,10 +37,9 @@ class Environment:
             return False # 5 or fewer points exist
         
     def add_obstacle(self):
-        spawn_probability = 0.01  #CHANGE
+        spawn_probability = 0.01  
         if random.random() < spawn_probability:
             obstacle = Obstacle()
-            #obstacle.rect.x = random.randrange(0, 400, 80)
             obstacle.rect.y = -obstacle.rect.height  # Spawn at the top of the screen
             if self._check_obstacle_placement(obstacle) and self.Max_obstacle_check() is False:
                 self.obstacles_group.add(obstacle)
@@ -59,20 +57,14 @@ class Environment:
 
     def car_colide(self) -> bool :
         colides = pygame.sprite.spritecollide(self.car,self.obstacles_group,False)
-        return len(colides) ==0
+        return len(colides) !=0
 
     def AddGood(self):
-        # pointCollided=pygame.sprite.spritecollide(self.car,self.good_points_group,True)
-        # if len(pointCollided) != 0:
-        #     self.score+=1
-        # Custom collision detection for coins
         if len(pygame.sprite.spritecollide(self.car,self.good_points_group,True)) !=0:
-             self.score += 1  # Increment the score
+             self.score += 1
              return True
         return False
-        # for sprite in self.good_points_group:
-        #     rect = sprite.rect
-
+       
     def reset(self):#for AI, we dont need screen,  print is good enough.
         from game import game
         print(self.score)
@@ -118,7 +110,7 @@ class Environment:
         ###
         if(self.AddGood()):
             self.reward-=2.06#coin reward(+0.06 so the lane channge reward will be canceled)
-        if not self.car_colide():
+        if self.car_colide():
            return (True,2)#lose reward
         ### Remove off screen obstacles and coins
         for obstacle in self.obstacles_group:
@@ -132,10 +124,3 @@ class Environment:
                 self.good_points_group.remove(GoodPoint)
         ### 
         return (False,self.reward)
-
-                 
-        
-        
-
-    
-
