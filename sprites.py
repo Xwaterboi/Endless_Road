@@ -45,7 +45,7 @@ class Obstacle(pygame.sprite.Sprite):
         # Use the static image for this instance
         self.image = Obstacle.OBSTACLE_IMAGE
         self.rect = self.image.get_rect()
-        self.lane=random.randint(0, 4)
+        self.lane=random.randint(1, 5)
         self.rect.x =  self.lane* LANEWIDTH    + (LANEWIDTH - self.rect.width) // 2 # Random lane
         self.rect.y = -100  #above the screen
         self.speed = 5  # Speed at which the obstacle moves down
@@ -68,7 +68,7 @@ class GoodPoint(pygame.sprite.Sprite):
             GoodPoint.COIN_IMAGE = pygame.image.load('pics\coin.png').convert_alpha()
         self.image = GoodPoint.COIN_IMAGE
         self.rect = self.image.get_rect()
-        self.lane=random.randint(0, 4)
+        self.lane=random.randint(1, 5)
         self.rect.x = self.lane * LANEWIDTH + (LANEWIDTH - self.rect.width) // 2  # Random lane
         self.rect.y = -100  # Random height above the screen; random.randint(-200, -50)
         self.speed = 5  # Speed at which the good point moves down

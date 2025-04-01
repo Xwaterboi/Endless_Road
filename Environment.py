@@ -92,13 +92,38 @@ class Environment:
                 state_list.append(0)  
                 state_list.append(0)  
         return torch.tensor(state_list, dtype=torch.float32)
-
+    
+    def Lane_Reward(self, lane=None):
+         if lane is None:
+             lane = self.car.lane
+         reward = -0.1 
+         Obstacles_In_Lane = []
+         for obstacle in self.obstacles_group:
+             if obstacle.lane == lane:
+                 Obstacles_In_Lane.append(obstacle)
+ 
+         # Check if there are no obstacles in the lane
+         if not Obstacles_In_Lane:
+             closest_obstacle = 0  # No obstacle in the lane, set to infinity
+             reward = 0.1  # Reward if lane is clear
+         else:
+             # Find the closest obstacle (based on the 'y' coordinate)
+             closest_obstacle = max(obstacles.rect.y for obstacles in Obstacles_In_Lane)
+ 
+         # Check for good points in the lane and add reward if conditions are met
+         for good_point in self.good_points_group:
+             if good_point.lane == lane and good_point.rect.y > closest_obstacle:
+                 reward += 0.33  # Experiment with this value
+ 
+         return reward
+     
+     
     def update (self,action):#reward are minus  1!!!!!
         self.reward=0.01
         prev_lane=self.car.lane
         self.move(action=action)
         if self.car.lane != prev_lane:
-            self.reward=self.reward-0.1#car change lane reward
+            self.reward=self.reward-0.01#car change lane reward
         ### Add obstacles and coins to screen
         self.add_obstacle()
         self.add_coins()
@@ -109,9 +134,9 @@ class Environment:
         self.good_points_group.update()
         ###
         if(self.AddGood()):
-            self.reward+=7#coin reward
+            self.reward+=1#coin reward
         if not self.car_colide():
-           return (True,-5)#lose reward
+           return (True,-1)#lose reward
         ### Remove off screen obstacles and coins
         for obstacle in self.obstacles_group:
             if obstacle.rect.top > 800 :
