@@ -64,7 +64,7 @@ def main ():
     step = 0
 
     ######### checkpoint Load ############
-    num = 1000# change back to 23
+    num = 1001# change back to 23
     checkpoint_path = f"Data/checkpoint{num}.pth"
     buffer_path = f"Data/buffer{num}.pth"
     resume_wandb = False

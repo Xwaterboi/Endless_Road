@@ -83,19 +83,19 @@ class Environment:
 
         # 1. Car's Lane
         state_list.append((self.car.lane+1)/10)  # Add the car's lane 0-4
-
+        #state_list.append((self.car.rect.top)/700)
         # 2. Obstacle Positions
         for obstacle in self.obstacles_group:
-            state_list.append((obstacle.lane+1)/10)  # X-coordinate of obstacle
-            state_list.append(obstacle.rect.bottom/700)  # Y-coordinate of obstacle
+            state_list.append((obstacle.lane)/10)  # X-coordinate of obstacle
+            state_list.append((self.car.rect.top-obstacle.rect.bottom)/700)  # Y-coordinate of obstacle
         while (len(state_list)<9):
             state_list.append(0)  
             state_list.append(0)  
         # 3. Good Point Positions
         for good_point in GoodPoint.indecis:
             if good_point:
-                state_list.append((good_point.lane+1)/10)  # X-coordinate of good point
-                state_list.append(good_point.rect.y/700)  # Y-coordinate of good point
+                state_list.append((good_point.lane)/10)  # X-coordinate of good point
+                state_list.append((self.car.rect.top-good_point.rect.bottom)/700)  # Y-coordinate of good point
             else:   
                 state_list.append(0)  
                 state_list.append(0)  
