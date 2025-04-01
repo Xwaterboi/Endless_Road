@@ -87,7 +87,7 @@ class Environment:
         # 2. Obstacle Positions
         for obstacle in self.obstacles_group:
             state_list.append((obstacle.lane+1)/10)  # X-coordinate of obstacle
-            state_list.append(obstacle.rect.y/700)  # Y-coordinate of obstacle
+            state_list.append(obstacle.rect.bottom/700)  # Y-coordinate of obstacle
         while (len(state_list)<9):
             state_list.append(0)  
             state_list.append(0)  
