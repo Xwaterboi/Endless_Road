@@ -101,12 +101,12 @@ class Environment:
                 state_list.append(0)  
         return torch.tensor(state_list, dtype=torch.float32)
 
-    def update (self,action):
-        self.reward=0
+    def update (self,action):#reward are minus  1!!!!!
+        self.reward=0.01
         prev_lane=self.car.lane
         self.move(action=action)
         if self.car.lane != prev_lane:
-            self.reward=self.reward-0.1#car change lane reward
+            self.reward+=0.05#car change lane reward
         ### Add obstacles and coins to screen
         self.add_obstacle()
         self.add_coins()
@@ -117,9 +117,9 @@ class Environment:
         self.good_points_group.update()
         ###
         if(self.AddGood()):
-            self.reward+=7#coin reward
+            self.reward-=2.06#coin reward(+0.06 so the lane channge reward will be canceled)
         if not self.car_colide():
-           return (True,-5)#lose reward
+           return (True,2)#lose reward
         ### Remove off screen obstacles and coins
         for obstacle in self.obstacles_group:
             if obstacle.rect.top > 800 :
