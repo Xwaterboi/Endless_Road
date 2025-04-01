@@ -105,7 +105,7 @@ class Environment:
          # Check if there are no obstacles in the lane
          if not Obstacles_In_Lane:
              closest_obstacle = 0  # No obstacle in the lane, set to infinity
-             reward = 0.1  # Reward if lane is clear
+             reward = 0.2  # Reward if lane is clear
          else:
              # Find the closest obstacle (based on the 'y' coordinate)
              closest_obstacle = max(obstacles.rect.y for obstacles in Obstacles_In_Lane)
@@ -120,6 +120,7 @@ class Environment:
      
     def update (self,action):#reward are minus  1!!!!!
         self.reward=0.01
+        self.reward+=self.Lane_Reward(self.car.lane)
         prev_lane=self.car.lane
         self.move(action=action)
         if self.car.lane != prev_lane:
@@ -133,17 +134,14 @@ class Environment:
         self.obstacles_group.update()
         self.good_points_group.update()
         ###
-        if(self.AddGood()):
-            self.reward+=1#coin reward
-        if not self.car_colide():
-           return (True,-1)#lose reward
+        if(self.AddGood()):self.reward+=1#coin reward
+        if not self.car_colide():return (True,-1)#lose reward
         ### Remove off screen obstacles and coins
         for obstacle in self.obstacles_group:
             if obstacle.rect.top > 800 :
                 obstacle.kill()
                 self.obstacles_group.remove(obstacle)
         for GoodPoint in self.good_points_group:
-
             if GoodPoint.rect.top > 800 :
                 GoodPoint.kill()
                 self.good_points_group.remove(GoodPoint)
