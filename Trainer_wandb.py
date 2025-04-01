@@ -48,7 +48,7 @@ def main ():
     player_hat.dqn_model = player.dqn_model.copy()
     batch_size = 128
     buffer = ReplayBuffer(path=None)
-    learning_rate = 0.0005
+    learning_rate = 0.0001
     ephocs = 200000
     start_epoch = 0
     C = 15
@@ -56,7 +56,7 @@ def main ():
     avg = 0
     scores, losses, avg_score = [], [], []
     optim = torch.optim.Adam(player.dqn_model.parameters(), lr=learning_rate)
-    scheduler = torch.optim.lr_scheduler.StepLR(optim,100, gamma=0.95)
+    scheduler = torch.optim.lr_scheduler.StepLR(optim,1*100, gamma=0.95)
     #scheduler = torch.optim.lr_scheduler.MultiStepLR(optim,[5000*1000, 10000*1000, 15000*1000, 20000*1000, 25000*1000, 30000*1000], gamma=0.5)
     # scheduler = torch.optim.lr_scheduler.MultiStepLR(optim, 
     #     milestones=[1000, 2000, 4000, 8000, 16000,32000,48000,64000,80000,96000,112000,128000,144000,160000 ], 
@@ -64,7 +64,7 @@ def main ():
     step = 0
 
     ######### checkpoint Load ############
-    num = 23
+    num = 1001# change back to 23
     checkpoint_path = f"Data/checkpoint{num}.pth"
     buffer_path = f"Data/buffer{num}.pth"
     resume_wandb = False
