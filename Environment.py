@@ -160,7 +160,8 @@ class Environment:
         self.good_points_group.update()
         ###
         
-        if(self.AddGood()):self.reward+=7#coin reward
+        if(self.AddGood()):
+            self.reward+=2#coin reward
         if not self.car_colide():return (True,-5)#lose reward
         ### Remove off screen obstacles and coins
         for obstacle in self.obstacles_group:

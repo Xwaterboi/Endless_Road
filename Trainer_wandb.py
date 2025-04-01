@@ -48,7 +48,7 @@ def main ():
     player_hat.dqn_model = player.dqn_model.copy()
     batch_size = 128
     buffer = ReplayBuffer(path=None)
-    learning_rate = 0.0001
+    learning_rate = 0.0005
     ephocs = 200000
     start_epoch = 0
     C = 15
@@ -64,7 +64,7 @@ def main ():
     step = 0
 
     ######### checkpoint Load ############
-    num = 1001# change back to 23
+    num = 26
     checkpoint_path = f"Data/checkpoint{num}.pth"
     buffer_path = f"Data/buffer{num}.pth"
     resume_wandb = False
