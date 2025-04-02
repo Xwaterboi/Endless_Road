@@ -101,24 +101,7 @@ class Environment:
                 state_list.append(0)  
         return torch.tensor(state_list, dtype=torch.float32)
     
-    # def Lane_Reward(self,lane=None):#calculate reward based on the lane the car is in, helps in vision for the AI agent
-    #     if lane is None:lane=self.car.lane
-    #     reward= -0.1
-    #     Obstacles_In_Lane=[]
-    #     for obstacle in self.obstacles_group:
-    #         if obstacle.lane == lane:
-    #             Obstacles_In_Lane.append(obstacle)
-    #     if not Obstacles_In_Lane:  # If no obstacles in lane
-    #         closest_obstacle = 0
-    #         reward=0.1
-    #     else:
-    #         for obstacle in Obstacles_In_Lane:
-    #             obstacle=obstacle.rect.y
-    #         closest_obstacle = min(Obstacles_In_Lane)##needs fixing
-    #     for good_point in self.good_points_group:
-    #         if (good_point.lane) == lane  and good_point.rect.y>closest_obstacle:# i put > because as the good point goes down, her y goes up. 
-    #             reward+=0.33#need to expirment with this value
-    #     return reward
+   
     def Lane_Reward(self, lane=None):
         if lane is None:
             lane = self.car.lane
@@ -139,7 +122,7 @@ class Environment:
         # Check for good points in the lane and add reward if conditions are met
         for good_point in self.good_points_group:
             if good_point.lane == lane and good_point.rect.y > closest_obstacle:
-                reward += 0.33  # Experiment with this value
+                reward += good_point.rect.y  #closer coin= more reward
 
         return reward
     
