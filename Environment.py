@@ -105,7 +105,7 @@ class Environment:
     def Lane_Reward(self, lane=None):
         if lane is None:
             lane = self.car.lane
-        reward = -0.1 
+        reward = 0 
         Obstacles_In_Lane = []
         for obstacle in self.obstacles_group:
             if obstacle.lane == lane:
@@ -117,6 +117,7 @@ class Environment:
             reward = 0.1  # Reward if lane is clear
         else:
             # Find the closest obstacle (based on the 'y' coordinate)
+            reward=-0.5*len(Obstacles_In_Lane)# more obstacles= more riskieness = less reward
             closest_obstacle = max(obstacles.rect.y for obstacles in Obstacles_In_Lane)
 
         # Check for good points in the lane and add reward if conditions are met
