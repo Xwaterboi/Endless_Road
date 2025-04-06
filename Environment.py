@@ -113,17 +113,17 @@ class Environment:
 
         # Check if there are no obstacles in the lane
         if not Obstacles_In_Lane:
-            closest_obstacle = 0  # No obstacle in the lane, set to infinity
-            reward = 0.1  # Reward if lane is clear
+            closest_obstacle = -100  # No obstacle in the lane, set to infinity
+            reward = 0.4  # Reward if lane is clear
         else:
             # Find the closest obstacle (based on the 'y' coordinate)
-            reward=-0.5*len(Obstacles_In_Lane)# more obstacles= more riskieness = less reward
+            reward=-len(Obstacles_In_Lane)# more obstacles= more riskieness = less reward , normalized
             closest_obstacle = max(obstacles.rect.y for obstacles in Obstacles_In_Lane)
 
         # Check for good points in the lane and add reward if conditions are met
         for good_point in self.good_points_group:
             if good_point.lane == lane and good_point.rect.y > closest_obstacle:
-                reward += good_point.rect.y  #closer coin= more reward
+                reward += good_point.rect.y*2.5  #closer coin= more reward
 
         return reward
     
@@ -146,7 +146,7 @@ class Environment:
         
         if(self.AddGood()):
             self.reward+=2#coin reward
-        if not self.car_colide():return (True,-5)#lose reward
+        if not self.car_colide():return (True,-2)#lose reward
         ### Remove off screen obstacles and coins
         for obstacle in self.obstacles_group:
             if obstacle.rect.top > 800 :

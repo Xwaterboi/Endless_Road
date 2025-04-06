@@ -22,20 +22,20 @@ def main ():
     WINDOWHEIGHT = 800
     MIN_BUFFER=500
     MODEL_PATH = "model/DQN.pth"  # Ensure cross-platform path
-    clock = pygame.time.Clock()
+    #clock = pygame.time.Clock()
     background = Background(WINDOWWIDTH, WINDOWHEIGHT) 
     env = Environment()
     background.render(env)
     best_score = 0
-    # if torch.cuda.is_available():
-    #     torch.backends.cudnn.benchmark = True
-    #     device = torch.device('cuda')
-    #     print("CUDA")
-    #     scaler = torch.amp.GradScaler('cuda')
-    # else:
-    device = torch.device('cpu')
-    print("CPU")
-    scaler = None
+    if torch.cuda.is_available():
+        torch.backends.cudnn.benchmark = True
+        device = torch.device('cuda')
+        print("CUDA")
+        scaler = torch.amp.GradScaler('cuda')
+    else:
+        device = torch.device('cpu')
+        print("CPU")
+        scaler = None
     
     ####### params and models ############
     dqn_model = DQN(device=device)
@@ -48,7 +48,7 @@ def main ():
     player_hat.dqn_model = player.dqn_model.copy()
     batch_size = 128
     buffer = ReplayBuffer(path=None)
-    learning_rate = 0.0005
+    learning_rate = 0.001
     ephocs = 200000
     start_epoch = 0
     C = 15
@@ -166,34 +166,34 @@ def main ():
     
             ############## Train ################
             states, actions, rewards, next_states, dones = buffer.sample(batch_size)
-            Q_values = player.Q(states, actions)
-            next_actions, Q_hat_Values = player_hat.get_Actions_Values(next_states) # DDQ
-            loss = player.dqn_model.loss(Q_values, rewards, Q_hat_Values, dones)
-            loss.backward()
-            torch.nn.utils.clip_grad_norm_(player.dqn_model.parameters(), max_norm=1.0)
-            optim.step()
-            optim.zero_grad()
+            #Q_values = player.Q(states, actions)
+            # next_actions, Q_hat_Values = player_hat.get_Actions_Values(next_states) # DDQ
+            # loss = player.dqn_model.loss(Q_values, rewards, Q_hat_Values, dones)
+            # loss.backward()
+            # torch.nn.utils.clip_grad_norm_(player.dqn_model.parameters(), max_norm=1.0)
+            # optim.step()
+            # optim.zero_grad()
             
 
             #this is so the gpu will be faster, and also cpu will be compatible
-            # if scaler is not None:
-            #     with torch.amp.autocast('cuda'):
-            #         Q_values = player.Q(states, actions)
-            #         next_actions, Q_hat_Values = player_hat.get_Actions_Values(next_states)#ddqn
-            #         loss = player.dqn_model.loss(Q_values, rewards, Q_hat_Values, dones)
-            #     scaler.scale(loss).backward()
-            #     scaler.step(optim)
-            #     scaler.update()
-            #     optim.zero_grad()
-            #     scheduler.step()
-            # else:
-            #     Q_values = player.Q(states, actions)
-            #     next_actions, Q_hat_Values = player_hat.get_Actions_Values(next_states)
-            #     loss = player.dqn_model.loss(Q_values, rewards, Q_hat_Values, dones)
-            #     loss.backward()
-            #     optim.step()
-            #     optim.zero_grad()
-            #     scheduler.step()
+            if scaler is not None:
+                with torch.amp.autocast('cuda'):
+                    Q_values = player.Q(states, actions)
+                    next_actions, Q_hat_Values = player_hat.get_Actions_Values(next_states)#ddqn
+                    loss = player.dqn_model.loss(Q_values, rewards, Q_hat_Values, dones)
+                scaler.scale(loss).backward()
+                scaler.step(optim)
+                scaler.update()
+                optim.zero_grad()
+                scheduler.step()
+            else:
+                Q_values = player.Q(states, actions)
+                next_actions, Q_hat_Values = player_hat.get_Actions_Values(next_states)
+                loss = player.dqn_model.loss(Q_values, rewards, Q_hat_Values, dones)
+                loss.backward()
+                optim.step()
+                optim.zero_grad()
+                scheduler.step()
         #after game ends, step.
         scheduler.step()
         if epoch % C == 0:
