@@ -44,7 +44,12 @@ class AI_Agent:
         # rows = torch.arange(Q_values.shape[0]).reshape(-1,1)
         # cols = actions.reshape(-1,1)
         # return Q_values[rows, cols]
+        
+        states = states.to(self.device)
+        actions = actions.to(self.device)
+        Q_values = self.dqn_model(states)
         return Q_values.gather(1, actions.reshape(-1, 1))
+
 
     
     def get_Actions_Values (self, states):
