@@ -41,14 +41,14 @@ class AI_Agent:
 
     def Q (self, states, actions):
         Q_values = self.dqn_model(states) # try: Q_values = self.DQN(states).gather(dim=1, actions) ; check if shape of actions is [-1, 1] otherwise dim=0
-        # rows = torch.arange(Q_values.shape[0]).reshape(-1,1)
-        # cols = actions.reshape(-1,1)
-        # return Q_values[rows, cols]
+        rows = torch.arange(Q_values.shape[0]).reshape(-1,1)
+        cols = actions.reshape(-1,1)
+        return Q_values[rows, cols]
         
-        states = states.to(self.device)
-        actions = actions.to(self.device)
-        Q_values = self.dqn_model(states)
-        return Q_values.gather(1, actions.reshape(-1, 1))
+        # states = states.to(self.device)
+        # actions = actions.to(self.device)
+        # Q_values = self.dqn_model(states)
+        # return Q_values.gather(1, actions.reshape(-1, 1))
 
 
     

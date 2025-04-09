@@ -27,15 +27,15 @@ def main ():
     env = Environment()
     background.render(env)
     best_score = 0
-    if torch.cuda.is_available():
-        torch.backends.cudnn.benchmark = True
-        device = torch.device('cuda')
-        print("CUDA")
-        scaler = torch.amp.GradScaler('cuda')
-    else:
-        device = torch.device('cpu')
-        print("CPU")
-        scaler = None
+    # if torch.cuda.is_available():
+    #     torch.backends.cudnn.benchmark = True
+    #     device = torch.device('cuda')
+    #     print("CUDA")
+    #     scaler = torch.amp.GradScaler('cuda')
+    # else:
+    device = torch.device('cpu')
+    print("CPU")
+    scaler = None
     
     ####### params and models ############
     dqn_model = DQN(device=device)
