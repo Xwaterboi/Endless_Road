@@ -133,7 +133,7 @@ class Environment:
         prev_lane=self.car.lane
         self.move(action=action)
         if self.car.lane != prev_lane:
-            self.reward=self.reward-0.01#car change lane reward
+            self.reward=self.reward-0.005#car change lane reward
         ### Add obstacles and coins to screen
         self.add_obstacle()
         self.add_coins()
@@ -145,13 +145,14 @@ class Environment:
         ###
         
         if(self.AddGood()):
-            self.reward+=2#coin reward
-        if not self.car_colide():return (True,-2)#lose reward
+            self.reward+=1#coin reward
+        if not self.car_colide():return (True,-1)#lose reward
         ### Remove off screen obstacles and coins
         for obstacle in self.obstacles_group:
             if obstacle.rect.top > 800 :
                 obstacle.kill()
                 self.obstacles_group.remove(obstacle)
+                self.reward+=0.01
         for GoodPoint in self.good_points_group:
 
             if GoodPoint.rect.top > 800 :

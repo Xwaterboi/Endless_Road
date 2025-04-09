@@ -51,19 +51,19 @@ def main ():
     learning_rate = 0.001
     ephocs = 200000
     start_epoch = 0
-    C = 15
+    C = 5
     loss = torch.tensor(0)
     avg = 0
     scores, losses, avg_score = [], [], []
     optim = torch.optim.Adam(player.dqn_model.parameters(), lr=learning_rate)
-    scheduler = torch.optim.lr_scheduler.StepLR(optim,1*100, gamma=0.95)
+    scheduler = torch.optim.lr_scheduler.StepLR(optim,5*100, gamma=0.97)
     # scheduler = torch.optim.lr_scheduler.MultiStepLR(optim, 
     #     milestones=[1000, 2000, 4000, 8000, 16000,32000,48000,64000,80000,96000,112000,128000,144000,160000 ], 
     #     gamma=0.6)
     step = 0
 
     ######### checkpoint Load ############
-    num = 27
+    num = 29
     checkpoint_path = f"Data/checkpoint{num}.pth"
     buffer_path = f"Data/buffer{num}.pth"
     resume_wandb = False
@@ -170,7 +170,7 @@ def main ():
             # next_actions, Q_hat_Values = player_hat.get_Actions_Values(next_states) # DDQ
             # loss = player.dqn_model.loss(Q_values, rewards, Q_hat_Values, dones)
             # loss.backward()
-            # torch.nn.utils.clip_grad_norm_(player.dqn_model.parameters(), max_norm=1.0)
+            #  torch.nn.utils.clip_grad_norm_(player.dqn_model.parameters(), max_norm=1.0)
             # optim.step()
             # optim.zero_grad()
             
@@ -182,18 +182,20 @@ def main ():
                     next_actions, Q_hat_Values = player_hat.get_Actions_Values(next_states)#ddqn
                     loss = player.dqn_model.loss(Q_values, rewards, Q_hat_Values, dones)
                 scaler.scale(loss).backward()
+                torch.nn.utils.clip_grad_norm_(player.dqn_model.parameters(), max_norm=1.0)
+
                 scaler.step(optim)
                 scaler.update()
                 optim.zero_grad()
-                scheduler.step()
+                
             else:
                 Q_values = player.Q(states, actions)
                 next_actions, Q_hat_Values = player_hat.get_Actions_Values(next_states)
                 loss = player.dqn_model.loss(Q_values, rewards, Q_hat_Values, dones)
                 loss.backward()
+                torch.nn.utils.clip_grad_norm_(player.dqn_model.parameters(), max_norm=1.0)
                 optim.step()
                 optim.zero_grad()
-                scheduler.step()
         #after game ends, step.
         scheduler.step()
         if epoch % C == 0:
