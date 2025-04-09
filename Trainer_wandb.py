@@ -10,7 +10,7 @@ from DQN import DQN
 import torch
 import wandb
 import os
-def main ():
+def main (run):
 
     pygame.init()
     
@@ -40,7 +40,7 @@ def main ():
     ####### params and models ############
     dqn_model = DQN(device=device)
     # Comment out this line if starting fresh training and uncomment the next line
-    dqn_model.load_params(MODEL_PATH)
+    #dqn_model.load_params(MODEL_PATH)
     #dqn_model.save_params(MODEL_PATH)
     print("Model loaded successfully!")
     player = AI_Agent(dqn_model,device=device)
@@ -54,16 +54,17 @@ def main ():
     C = 5
     loss = torch.tensor(0)
     avg = 0
+    max_norm_grads=0.5
     scores, losses, avg_score = [], [], []
-    optim = torch.optim.Adam(player.dqn_model.parameters(), lr=learning_rate)
-    scheduler = torch.optim.lr_scheduler.StepLR(optim,5*100, gamma=0.97)
+    optim = torch.optim.AdamW(dqn_model.parameters(), lr=learning_rate, weight_decay=1e-5)
+    scheduler = torch.optim.lr_scheduler.StepLR(optim,5*10000, gamma=0.97)
     # scheduler = torch.optim.lr_scheduler.MultiStepLR(optim, 
     #     milestones=[1000, 2000, 4000, 8000, 16000,32000,48000,64000,80000,96000,112000,128000,144000,160000 ], 
     #     gamma=0.6)
     step = 0
 
     ######### checkpoint Load ############
-    num = 30
+    num = run
     checkpoint_path = f"Data/checkpoint{num}.pth"
     buffer_path = f"Data/buffer{num}.pth"
     resume_wandb = False
@@ -82,7 +83,7 @@ def main ():
     player.dqn_model.train()
     player_hat.dqn_model.eval()
     
-    ################# Wandb.init #####################
+    #region################# Wandb.init #####################
     
     wandb.init(
         # set the wandb project where this run will be logged
@@ -108,7 +109,7 @@ def main ():
     )
     wandb.config.update({"Model":str(player.dqn_model)}, allow_val_change=True)
     
-    #################################
+    #################################endregion
 
     for epoch in range(start_epoch, ephocs):
         step = 0
@@ -137,9 +138,11 @@ def main ():
                     }
                     torch.save(checkpoint, checkpoint_path)
                     torch.save(buffer, buffer_path)
+                    dqn_model.save_params(MODEL_PATH)
+
                     return
             
-            ############## Sample Environement #########################
+            #region############# Sample Environement #########################
             action = player.getAction(state=state, epoch=epoch)
             
             done,reward = env.update(action)
@@ -164,7 +167,8 @@ def main ():
             if len(buffer) < MIN_BUFFER:
                 continue
     
-            ############## Train ################
+            #endregion
+            ################ Train ################
             states, actions, rewards, next_states, dones = buffer.sample(batch_size)
             #Q_values = player.Q(states, actions)
             # next_actions, Q_hat_Values = player_hat.get_Actions_Values(next_states) # DDQ
@@ -182,22 +186,22 @@ def main ():
                     next_actions, Q_hat_Values = player_hat.get_Actions_Values(next_states)#ddqn
                     loss = player.dqn_model.loss(Q_values, rewards, Q_hat_Values, dones)
                 scaler.scale(loss).backward()
-                torch.nn.utils.clip_grad_norm_(player.dqn_model.parameters(), max_norm=1.0)
-
+                torch.nn.utils.clip_grad_norm_(player.dqn_model.parameters(), max_norm=max_norm_grads)
                 scaler.step(optim)
                 scaler.update()
                 optim.zero_grad()
-                
+                scheduler.step()
             else:
                 Q_values = player.Q(states, actions)
                 next_actions, Q_hat_Values = player_hat.get_Actions_Values(next_states)
                 loss = player.dqn_model.loss(Q_values, rewards, Q_hat_Values, dones)
                 loss.backward()
-                torch.nn.utils.clip_grad_norm_(player.dqn_model.parameters(), max_norm=1.0)
+                torch.nn.utils.clip_grad_norm_(player.dqn_model.parameters(), max_norm=max_norm_grads)
                 optim.step()
                 optim.zero_grad()
+                scheduler.step()
         #after game ends, step.
-        scheduler.step()
+        
         if epoch % C == 0:
             # player_hat.dqn_model.load_state_dict(player.dqn_model.state_dict())
             player_hat.fix_update(dqn=player.dqn_model)
@@ -239,6 +243,8 @@ def main ():
             }
             torch.save(checkpoint, checkpoint_path)
             torch.save(buffer, buffer_path)
+            dqn_model.save_params(MODEL_PATH)
+
 
 
 
@@ -246,4 +252,10 @@ def main ():
 
         
 if __name__ == "__main__":
-    main ()
+    if not os.path.exists("Data/checkpoint_num"):
+        torch.save(200, "Data/checkpoint_num")    
+    
+    run = torch.load("Data/checkpoint_num")
+    run += 1
+    torch.save(run, "Data/checkpoint_num")    
+    main (run)

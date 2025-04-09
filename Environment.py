@@ -78,30 +78,63 @@ class Environment:
         print(self.score)
         game.loop()
 
+    # def state(self):
+    #     state_list = []
+
+    #     # 1. Car's Lane
+    #     state_list.append((self.car.lane+1)/10)  # Add the car's lane 0-4
+    #     #state_list.append((self.car.rect.top)/700)
+    #     # 2. Obstacle Positions
+    #     for obstacle in self.obstacles_group:
+    #         state_list.append((obstacle.lane)/10)  # X-coordinate of obstacle
+    #         state_list.append((self.car.rect.top-obstacle.rect.bottom)/700)  # Y-coordinate of obstacle
+    #     while (len(state_list)<9):
+    #         state_list.append(0)  
+    #         state_list.append(0)  
+    #     # 3. Good Point Positions
+    #     for good_point in GoodPoint.indecis:
+    #         if good_point:
+    #             state_list.append((good_point.lane)/10)  # X-coordinate of good point
+    #             state_list.append((self.car.rect.top-good_point.rect.bottom)/700)  # Y-coordinate of good point
+    #         else:   
+    #             state_list.append(0)  
+    #             state_list.append(0)  
+    #     return torch.tensor(state_list, dtype=torch.float32)
+    
     def state(self):
         state_list = []
-
         # 1. Car's Lane
         state_list.append((self.car.lane+1)/10)  # Add the car's lane 0-4
         #state_list.append((self.car.rect.top)/700)
-        # 2. Obstacle Positions
-        for obstacle in self.obstacles_group:
-            state_list.append((obstacle.lane)/10)  # X-coordinate of obstacle
-            state_list.append((self.car.rect.top-obstacle.rect.bottom)/700)  # Y-coordinate of obstacle
-        while (len(state_list)<9):
-            state_list.append(0)  
-            state_list.append(0)  
-        # 3. Good Point Positions
-        for good_point in GoodPoint.indecis:
-            if good_point:
-                state_list.append((good_point.lane)/10)  # X-coordinate of good point
-                state_list.append((self.car.rect.top-good_point.rect.bottom)/700)  # Y-coordinate of good point
-            else:   
-                state_list.append(0)  
-                state_list.append(0)  
+        # 2. lane rewards
+        for lane in range(0,4):
+            state_list.append(self.Lane_Value(lane))
+  
         return torch.tensor(state_list, dtype=torch.float32)
     
-   
+    def Lane_Value(self, lane):
+        
+        value = 0 
+        Obstacles_In_Lane = []
+        for obstacle in self.obstacles_group:
+            if obstacle.lane == lane:
+                Obstacles_In_Lane.append(obstacle)
+
+        # Check if there are no obstacles in the lane
+        if not Obstacles_In_Lane:
+            closest_obstacle = -100  # No obstacle in the lane, set to infinity
+            value = 0.5 # value if lane is clear
+        else:
+            # Find the closest obstacle (based on the 'y' coordinate)
+            closest_obstacle = max(obstacles.rect.y for obstacles in Obstacles_In_Lane)/100
+            value= -1*closest_obstacle
+
+        # Check for good points in the lane and add value if conditions are met
+        for good_point in self.good_points_group:
+            if good_point.lane == lane and good_point.rect.y > closest_obstacle:
+                value += (good_point.rect.y/700)  #closer coin= more value
+
+        return value
     def Lane_Reward(self, lane=None):
         if lane is None:
             lane = self.car.lane
