@@ -127,8 +127,8 @@ class Environment:
         else:
             # Find the closest obstacle (based on the 'y' coordinate)
             closest_obstacle = max(obstacles.rect.y for obstacles in Obstacles_In_Lane)
-            distance = max(1, WINDOW_HEIGHT - closest_obstacle)
-            value = -1.0 * (1 / distance)
+            distance = max(1, WINDOW_HEIGHT - closest_obstacle)/WINDOW_HEIGHT
+            value = -1.0 * (distance)
 
 
         # Check for good points in the lane and add value if conditions are met
