@@ -19,7 +19,8 @@ class DQN (nn.Module):
         self.linear2 = nn.Linear(layer1, layer2,device=device)
         self.linear3 = nn.Linear(layer1, layer2,device=device)
         self.output = nn.Linear(layer2, output_size,device=device)
-        self.MSELoss = nn.MSELoss()
+        #self.MSELoss = nn.MSELoss()
+        self.HuberLoss = nn.SmoothL1Loss()
 
     def forward (self, x):
         x=x.to(self.device)
@@ -38,7 +39,8 @@ class DQN (nn.Module):
     
     def loss (self, Q_values, rewards, Q_next_Values, dones ):
         Q_new = rewards.to(self.device) + gamma * Q_next_Values.to(self.device) * (1- dones.to(self.device))
-        return self.MSELoss(Q_values, Q_new)
+        Q_new=torch.clamp(Q_new,-10,10)
+        return self.HuberLoss(Q_values, Q_new)
     
     def load_params(self, path):
         self.load_state_dict(torch.load(path))

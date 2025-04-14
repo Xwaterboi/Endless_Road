@@ -1,13 +1,12 @@
 import pygame
-import sprites
 from graphics import Background
-import random
 from Environment import Environment
 
 from ReplayBuffer import ReplayBuffer
 from AI_Agent import AI_Agent
 from DQN import DQN
 import torch
+
 import wandb
 import os
 def main (run):

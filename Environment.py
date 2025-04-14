@@ -126,13 +126,15 @@ class Environment:
             value = 0.5 # value if lane is clear
         else:
             # Find the closest obstacle (based on the 'y' coordinate)
-            closest_obstacle = max(obstacles.rect.y for obstacles in Obstacles_In_Lane)/100
-            value= -1*closest_obstacle
+            closest_obstacle = max(obstacles.rect.y for obstacles in Obstacles_In_Lane)
+            distance = max(1, WINDOW_HEIGHT - closest_obstacle)
+            value = -1.0 * (1 / distance)
+
 
         # Check for good points in the lane and add value if conditions are met
         for good_point in self.good_points_group:
             if good_point.lane == lane and good_point.rect.y > closest_obstacle:
-                value += (good_point.rect.y/700)  #closer coin= more value
+                value += (good_point.rect.y/WINDOW_HEIGHT)  #closer coin= more value,max 1
 
         return value
     def Lane_Reward(self, lane=None):
@@ -156,7 +158,7 @@ class Environment:
         # Check for good points in the lane and add reward if conditions are met
         for good_point in self.good_points_group:
             if good_point.lane == lane and good_point.rect.y > closest_obstacle:
-                reward += good_point.rect.y*2.5  #closer coin= more reward
+                reward += (good_point.rect.y/WINDOW_HEIGHT)*2.5  #closer coin= more reward
 
         return reward
     
@@ -191,7 +193,7 @@ class Environment:
             if GoodPoint.rect.top > 800 :
                 GoodPoint.kill()
                 self.good_points_group.remove(GoodPoint)
-        ### 
+        self.reward = self.reward / (1.0 + abs(self.reward))
         return (False,self.reward)
 
                  
