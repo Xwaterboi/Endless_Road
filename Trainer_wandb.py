@@ -1,19 +1,21 @@
 import pygame
+import numpy as np
 from graphics import Background
 from Environment import Environment
-
 from ReplayBuffer import ReplayBuffer
+# from ReplayBuffer_n_step import ReplayBuffer_n_step as ReplayBuffer
 from AI_Agent import AI_Agent
-from DQN import DQN
+# from AI_Agent_softmax import AI_Agent
+# from DuelingDQN import DQN
+# from DQN import DQN
+from DQN_Attension import DQN
+from Tester import Tester
 import torch
-
 import wandb
 import os
-def main (run):
+def main (chkpt):
 
     pygame.init()
-    
-    
     
     #CONSTS
     FPS = 60
@@ -21,49 +23,43 @@ def main (run):
     WINDOWHEIGHT = 800
     MIN_BUFFER=500
     MODEL_PATH = "model/DQN.pth"  # Ensure cross-platform path
-    #clock = pygame.time.Clock()
+    clock = pygame.time.Clock()
     background = Background(WINDOWWIDTH, WINDOWHEIGHT) 
-    env = Environment()
-    background.render(env)
+    env = Environment(chkpt)
     best_score = 0
     if torch.cuda.is_available():
-        torch.backends.cudnn.benchmark = True
         device = torch.device('cuda')
         print("CUDA")
-        scaler = torch.amp.GradScaler('cuda')
     else:
         device = torch.device('cpu')
         print("CPU")
-        scaler = None
     
-    ####### params and models ############
+    #region###### params and models ############
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     dqn_model = DQN(device=device)
-    # Comment out this line if starting fresh training and uncomment the next line
-    #dqn_model.load_params(MODEL_PATH)
-    #dqn_model.save_params(MODEL_PATH)
+    # dqn_model.load_params(MODEL_PATH)
     print("Model loaded successfully!")
     player = AI_Agent(dqn_model,device=device)
     player_hat = AI_Agent(dqn_model,device=device)
     player_hat.dqn_model = player.dqn_model.copy()
-    batch_size = 128
+    batch_size = 64
     buffer = ReplayBuffer(path=None)
-    learning_rate = 0.001
+    learning_rate = 1e-5
     ephocs = 200000
     start_epoch = 0
     C = 5
     loss = torch.tensor(0)
     avg = 0
-    max_norm_grads=0.5
-    scores, losses, avg_score = [], [], []
-    optim = torch.optim.AdamW(dqn_model.parameters(), lr=learning_rate, weight_decay=1e-5)
-    scheduler = torch.optim.lr_scheduler.StepLR(optim,5*10000, gamma=0.97)
-    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optim, 
-    #     milestones=[1000, 2000, 4000, 8000, 16000,32000,48000,64000,80000,96000,112000,128000,144000,160000 ], 
-    #     gamma=0.6)
-    step = 0
 
-    ######### checkpoint Load ############
-    num = run
+    scores, losses, avg_score = [], [], []
+    # optim = torch.optim.Adam(player.dqn_model.parameters(), lr=learning_rate, weight_decay=1e-4)
+    optim = torch.optim.AdamW(player.dqn_model.parameters(), lr=learning_rate, weight_decay=1e-3)
+    # scheduler = torch.optim.lr_scheduler.StepLR(optim,100000, gamma=0.50)
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optim,[1000*200, 3000*200, 5000*200], gamma=0.9)
+    step = 0
+    #endregion
+    #region######## checkpoint Load ############
+    num = chkpt
     checkpoint_path = f"Data/checkpoint{num}.pth"
     buffer_path = f"Data/buffer{num}.pth"
     resume_wandb = False
@@ -81,8 +77,8 @@ def main (run):
         avg_score = checkpoint['avg_score']
     player.dqn_model.train()
     player_hat.dqn_model.eval()
-    
-    #region################# Wandb.init #####################
+    #endregion
+    #region################ Wandb.init #####################
     
     wandb.init(
         # set the wandb project where this run will be logged
@@ -94,8 +90,7 @@ def main (run):
         "name": f"Endless_Road {num}",
         "checkpoint": checkpoint_path,
         "learning_rate": learning_rate,
-        #"Schedule": f'{str(scheduler.milestones)} gamma={str(scheduler.gamma)}',
-        #"Schedule": f'step_size={str(scheduler.step_size)} gamma={str(scheduler.gamma)}',
+        "Schedule": f'{str(scheduler.milestones)} gamma={str(scheduler.gamma)}',
         "epochs": ephocs,
         "start_epoch": start_epoch,
         "decay": 50,
@@ -107,21 +102,28 @@ def main (run):
         }
     )
     wandb.config.update({"Model":str(player.dqn_model)}, allow_val_change=True)
-    
-    #################################endregion
+    #endregion
+        
+    tester = Tester(player,env)
 
     for epoch in range(start_epoch, ephocs):
+        # if epoch % 100 == 0:
+        #     print("\nstart test ...")
+        #     tester_step, tester_score = tester.test(num_games=10)
+        #     wandb.log ({"tester_step": tester_step, "tester_score":tester_score })
+        #     print(f"tester_step: {tester_step}  tester_score: {tester_score}")
         step = 0
-        #clock = pygame.time.Clock()
-        background = Background(WINDOWWIDTH, WINDOWHEIGHT)
-        env = Environment()
+        clock = pygame.time.Clock()
+        env.new_game()
         background.render(env)
 
         end_of_game = False
         state = env.state()
         
         while not end_of_game:
+            # clock.tick(60)
             step += 1
+            print(step, end="\r")
             pygame.event.pump()
             events = pygame.event.get()
             for event in events:
@@ -137,124 +139,88 @@ def main (run):
                     }
                     torch.save(checkpoint, checkpoint_path)
                     torch.save(buffer, buffer_path)
-                    dqn_model.save_params(MODEL_PATH)
-
+                    pygame.quit()
                     return
             
-            #region############# Sample Environement #########################
-            action = player.getAction(state=state, epoch=epoch)
-            
+            ############## Sample Environement #########################
+            action = player.getAction(state=state, epoch=epoch, train=True)
             done,reward = env.update(action)
-            # if env.score>=5:
-            #     reward=5
-            #     break
             next_state = env.state()
+            imediate_reward = env.immediate_reward_simple (state, action)
+            reward += imediate_reward
             buffer.push(state, torch.tensor(action, dtype=torch.int64), torch.tensor(reward, dtype=torch.float32), 
                         next_state, torch.tensor(done, dtype=torch.float32))
             if done:
                 best_score = max(best_score, env.score)
+                # background.render(env)
                 break
             else:
                 background.render(env)
-            #print(state)
-            state = next_state
 
+            state = next_state
             
-            pygame.display.flip()
-            # clock.tick(FPS)
             
             if len(buffer) < MIN_BUFFER:
                 continue
     
-            #endregion
-            ################ Train ################
+            ############## Train ################
             states, actions, rewards, next_states, dones = buffer.sample(batch_size)
-            #Q_values = player.Q(states, actions)
-            # next_actions, Q_hat_Values = player_hat.get_Actions_Values(next_states) # DDQ
-            # loss = player.dqn_model.loss(Q_values, rewards, Q_hat_Values, dones)
-            # loss.backward()
-            #  torch.nn.utils.clip_grad_norm_(player.dqn_model.parameters(), max_norm=1.0)
-            # optim.step()
-            # optim.zero_grad()
+            Q_values = player.Q(states, actions)
+
+            next_actions, _ = player.get_Actions_Values(next_states)
+            Q_hat_Values = player_hat.Q(next_states,next_actions) # DDQN
+            
+            # _, Q_hat_Values = player_hat.get_Actions_Values(next_states) # DQN
+
+
+            loss = player.dqn_model.loss(Q_values, rewards, Q_hat_Values, dones)
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(player.dqn_model.parameters(), max_norm=1.0)
+            optim.step()
+            optim.zero_grad()
+            scheduler.step()
+
+        if epoch % C == 0:
+            player_hat.fix_update(dqn=player.dqn_model)
             
 
-            #this is so the gpu will be faster, and also cpu will be compatible
-            if scaler is not None:
-                with torch.amp.autocast('cuda'):
-                    Q_values = player.Q(states, actions)
-                    next_actions, Q_hat_Values = player_hat.get_Actions_Values(next_states)#ddqn
-                    loss = player.dqn_model.loss(Q_values, rewards, Q_hat_Values, dones)
-                scaler.scale(loss).backward()
-                torch.nn.utils.clip_grad_norm_(player.dqn_model.parameters(), max_norm=max_norm_grads)
-                scaler.step(optim)
-                scaler.update()
-                optim.zero_grad()
-                scheduler.step()
-            else:
-                Q_values = player.Q(states, actions)
-                next_actions, Q_hat_Values = player_hat.get_Actions_Values(next_states)
-                loss = player.dqn_model.loss(Q_values, rewards, Q_hat_Values, dones)
-                loss.backward()
-                torch.nn.utils.clip_grad_norm_(player.dqn_model.parameters(), max_norm=max_norm_grads)
-                optim.step()
-                optim.zero_grad()
-                scheduler.step()
-        #after game ends, step.
-        
-        if epoch % C == 0:
-            # player_hat.dqn_model.load_state_dict(player.dqn_model.state_dict())
-            player_hat.fix_update(dqn=player.dqn_model)
-            # player_hat.soft_update(dqn_model=player.dqn_model, tau=tau)
+        #region log & print########################################
+        rounded_np = np.round(player.dqn_model.level_embedding.weight.detach().cpu().numpy(), 4).squeeze()
+        clean_list = [round(float(v), 4) for v in rounded_np.tolist()]
 
-        #########################################
-        print (f'epoch: {epoch} loss: {loss:.7f} LR: {scheduler.get_last_lr()}  ' \
-               f'score: {env.score} step {step} ')
+        print (f'chkpt: {num} epoch: {epoch} loss: {loss:.7f} LR: {scheduler.get_last_lr()[0]:.6f}  ',
+               f'score: {round(env.score,1)} step {step}', 
+               f'embedding: {clean_list}')
         
-        if epoch % 10 == 0:
-            scores.append(env.score)
-            losses.append(loss.item())
         wandb.log ({
                 "score": env.score,
                 "loss": loss.item(),
                 "step":step
             })
-        step = 0
-        avg = (avg * (epoch % 10) + env.score) / (epoch % 10 + 1)
-        if (epoch + 1) % 10 == 0:
-            avg_score.append(avg)
-            wandb.log ({
-                # "score": env.score,
-                # "loss": loss.item(),
-                "avg_score": avg
-            })
-            print (f'average score last 10 games: {avg} ')
-            avg = 0
+        
+        
 
-        if epoch % 1000 == 0 and epoch > 0:
+        if epoch % 500 == 0 and epoch > 0:
             checkpoint = {
                 'epoch': epoch,
                 'model_state_dict': player.dqn_model.state_dict(),
                 'optimizer_state_dict': optim.state_dict(),
                 'scheduler_state_dict': scheduler.state_dict(),
-                'loss': losses,
-                'scores':scores,
-                'avg_score': avg_score
             }
             torch.save(checkpoint, checkpoint_path)
             torch.save(buffer, buffer_path)
-            dqn_model.save_params(MODEL_PATH)
-
-
+            
+        #endregion
 
 
 
 
         
 if __name__ == "__main__":
-    if not os.path.exists("Data/checkpoint_num"):
-        torch.save(200, "Data/checkpoint_num")    
+    if not os.path.exists("Data/checkpoit_num"):
+        torch.save(101, "Data/checkpoit_num")    
     
-    run = torch.load("Data/checkpoint_num")
-    run += 1
-    torch.save(run, "Data/checkpoint_num")    
-    main (run)
+    chkpt = torch.load("Data/checkpoit_num", weights_only=False)
+    chkpt += 1
+    torch.save(chkpt, "Data/checkpoit_num")    
+    main (chkpt)

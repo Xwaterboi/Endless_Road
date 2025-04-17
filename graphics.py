@@ -1,5 +1,5 @@
 import pygame
-from Environment import *
+# from Environment import *
 #from game import game
 # Colors
 GRAY = (128, 128, 128)
@@ -7,6 +7,7 @@ WHITE = (255, 255, 255)
 BLACK = (0,0,0)
 BUTTON_COLOR = (50, 50, 255)  # Blue button color
 BUTTON_HOVER_COLOR = (100, 100, 255)  # Button hover color
+
 class Background:
     def __init__(self, width, height):
         self.width = width
@@ -16,13 +17,10 @@ class Background:
         pygame.font.init()
         self.display = pygame.display.set_mode((width,height))#+100
         self.header_surf = pygame.Surface((width, 100))
-        self.surface = pygame.Surface((width, height))
+        self.surface = pygame.Surface((width, height-100))
         self.header_surf.fill(WHITE)
-        self.header_rect = pygame.Rect(0, 0, width, 100)
         self.surface.fill(GRAY)
         self.draw_dashed_lines()
-      
-        
         pygame.display.set_caption('Endless Road')
         
 
@@ -51,43 +49,23 @@ class Background:
 
     def draw_surface (self):
         self.down = (self.down + 1) % 30
-        width, height = self.width, self.height
-        self.surface = pygame.Surface((width, height))
         self.surface.fill(GRAY)
         self.draw_dashed_lines()
 
-    # def render(self, env):
-    #     #self.good=Environment.score
-    #     self.draw_surface()
-    #     self.display.blit(self.header_surf, (0, 0))
-    #     self.display.blit(self.surface, (0, 100))
-    #     self.write (surface=self.header_surf, text="Score: " + str(env.score))
     
-    #     for obstacle in env.obstacles_group:
-    #         if obstacle.rect.colliderect(self.header_rect):
-    #             obstacle.visible = False
-    #         else:
-    #             obstacle.visible = True
-    #     env.car.draw(self.display)
-    #     env.obstacles_group.draw(self.display)
-    #     env.good_points_group.draw(self.display)  
     def render(self, env):
         self.draw_surface()  # Redraw scrolling background
        
         # Draw the score
-        self.write(surface=self.header_surf, text="Score: " + str(env.score))
+        text = f"Score: {str(round(env.score))} chkpt: {str(env.chkpt)} "
+        self.write(surface=self.header_surf, text=text)
 
-        # Draw obstacles and good points with an offset
-        for obstacle in env.obstacles_group:
-            self.surface.blit(obstacle.image, (obstacle.rect.x, obstacle.rect.y))
-        
-        for good_point in env.good_points_group:
-            self.surface.blit(good_point.image, (good_point.rect.x, good_point.rect.y))
-
-        # Draw car without any offset
+        env.obstacles_group.draw(self.surface)
+        env.good_points_group.draw(self.surface)
         env.car.draw(self.surface)
         self.display.blit(self.header_surf, (0, 0))  # Draw the header
         self.display.blit(self.surface, (0, 100))  # Draw the main play surface
+        pygame.display.flip()
 
     def end_screen(self):
         # Draw the background for the end screen (gray or any other color)
@@ -147,3 +125,7 @@ class Background:
             if mouse_pressed[0]:  # Left click
                 pygame.quit()
                 exit()  # Call the quit callback function
+
+            
+    
+    

@@ -4,10 +4,11 @@ import torch.nn.functional as F
 import copy
 
 # Parameters
-input_size = 5 # Q(state) see environment for state shape
+input_size = 10 # Q(state) see environment for state shape
 layer1 = 128
-layer2 = 128
-output_size = 3# Q(state)-> value of a
+layer2 = 256
+layer3 = 128
+output_size = 3 # Q(state)-> 4 value of stay, left, right, shoot
 gamma = 0.99 
  
 
@@ -17,10 +18,9 @@ class DQN (nn.Module):
         self.device = device
         self.linear1 = nn.Linear(input_size, layer1,device=device)
         self.linear2 = nn.Linear(layer1, layer2,device=device)
-        self.linear3 = nn.Linear(layer1, layer2,device=device)
-        self.output = nn.Linear(layer2, output_size,device=device)
-        #self.MSELoss = nn.MSELoss()
-        self.HuberLoss = nn.SmoothL1Loss()
+        self.linear3 = nn.Linear(layer2, layer3,device=device)
+        self.output = nn.Linear(layer3, output_size,device=device)
+        self.MSELoss = nn.MSELoss()
 
     def forward (self, x):
         x=x.to(self.device)
@@ -30,17 +30,12 @@ class DQN (nn.Module):
         x = F.leaky_relu(x)
         x = self.linear3(x)
         x = F.leaky_relu(x)
-        # x = self.linear4(x)
-        # x = F.leaky_relu(x)
-        # x = self.linear5(x)
-        # x = F.leaky_relu(x)
         x = self.output(x)
         return x
     
     def loss (self, Q_values, rewards, Q_next_Values, dones ):
         Q_new = rewards.to(self.device) + gamma * Q_next_Values.to(self.device) * (1- dones.to(self.device))
-        Q_new=torch.clamp(Q_new,-10,10)
-        return self.HuberLoss(Q_values, Q_new)
+        return self.MSELoss(Q_values, Q_new)
     
     def load_params(self, path):
         self.load_state_dict(torch.load(path))

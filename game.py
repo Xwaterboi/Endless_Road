@@ -4,10 +4,10 @@ from graphics import Background
 import random
 from Environment import Environment
 
-from Human_Agent import Human_Agent
-from Random_Agent import Random_Agent
+# from Human_Agent import Human_Agent
+# from Random_Agent import Random_Agent
 from AI_Agent import AI_Agent
-from DQN import DQN
+from DQN_Attension import DQN
 import torch
 pygame.init()
 
@@ -15,7 +15,7 @@ pygame.init()
 FPS = 60
 WINDOWWIDTH = 400
 WINDOWHEIGHT = 800
-MODEL_PATH = "model/DQN.pth"  # Ensure cross-platform path
+MODEL_PATH = None # "model/DQN.pth"  # Ensure cross-platform path
 
 clock = pygame.time.Clock()
 background = Background(WINDOWWIDTH, WINDOWHEIGHT)
@@ -27,13 +27,13 @@ background.render(env)
 # Load DQN model
 dqn_model = DQN()
 
+if MODEL_PATH:
+    dqn_model.load_params(MODEL_PATH)
+    print("Model loaded successfully!")
 
-dqn_model.load_params(MODEL_PATH)
-print("Model loaded successfully!")
 
-
-player = AI_Agent(dqn_model)
-
+# player = AI_Agent(dqn_model)
+player = AI_Agent(dqn_model=dqn_model,train=False)
 class Game:
     def __init__(self):
         pass
@@ -61,8 +61,8 @@ class Game:
         while run:
             dt = clock.tick(FPS)
             pygame.event.pump()
-
-            for event in pygame.event.get():
+            events = pygame.event.get()
+            for event in events:
                 if event.type == pygame.QUIT:
                     run = False
                     pygame.quit()
@@ -75,7 +75,7 @@ class Game:
                 win = True
 
             state = env.state()
-            action = player.getAction(state)
+            action = player.getAction(events=events, state=env.state())
 
             #env.move(action=action)
             done,reward = env.update(action=action) or win
@@ -97,16 +97,6 @@ class Game:
 if __name__ == "__main__":
     game = Game()
     game.start_new_game()
-
-
-
-
-
-
-
-
-
-
 
 
 # import pygame

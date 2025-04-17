@@ -1,55 +1,69 @@
 from sprites import *
 import torch
+import graphics as D
+import torch
+
+
 class Environment:
-    def __init__(self) -> None:
+    def __init__(self, chkpt = 1) -> None:
         self.car = Car(2)
         self.obstacles_group = pygame.sprite.Group()
         self.good_points_group= pygame.sprite.Group()
         #self.spawn_timer = 0
         self.score=0
         GoodPoint.indecis = [None] * 5
-
-
-    def move (self, action):#checks if action  Is Legal Move
+        self.coin_reward = 1
+        self.lose_reward = -3
+        self.change_line_reward = 0
+        self.i_reward = 0.5
+        self.chkpt = chkpt
+        self.car_top_row = 118
+        self.car_top = 590
+        self.Max_obstacle = 5
+        self.Max_GoodPoints = 5
+        self.obs_prob = 0.015
+        self.good_prob = 0.015
+    def move (self, action):
         lane = self.car.lane
         if action == 1 and lane < 4:
             self.car.lane +=1
             
         if action == -1 and lane > 0:
             self.car.lane -=1
-
+        
     def _check_obstacle_placement(self, obstacle):
         collided = pygame.sprite.spritecollide(obstacle, self.obstacles_group, False)
         collided2 = pygame.sprite.spritecollide(obstacle, self.good_points_group, False)
         return len(collided) == 0 and len(collided2) == 0  # Return True if no collisions
-    
+
     def Max_obstacle_check(self):
         """Checks if there are more than 10 obstacles in the game."""
-        if len(self.obstacles_group) >= 4:
+        if len(self.obstacles_group) >= self.Max_obstacle:
             return True  # More than 10 obstacles exist
         else:
             return False # 10 or fewer obstacles exist
             
     def Max_GoodPoints_check(self):
         """Checks if there are more than 10 good points in the game."""
-        if len(self.good_points_group) >= 5:
+        if len(self.good_points_group) >= self.Max_obstacle:
             return True  # More than 5 points exist
         else:
             return False # 5 or fewer points exist
         
     def add_obstacle(self):
-        spawn_probability = 0.01  #CHANGE
-        if random.random() < spawn_probability:
+        
+        if random.random() < self.obs_prob:
             obstacle = Obstacle()
             #obstacle.rect.x = random.randrange(0, 400, 80)
             obstacle.rect.y = -obstacle.rect.height  # Spawn at the top of the screen
             if self._check_obstacle_placement(obstacle) and self.Max_obstacle_check() is False:
                 self.obstacles_group.add(obstacle)
+            else:
+                obstacle.kill()
 
-
-    def add_coins (self):                                                           ###### Gilad
+    def add_coins (self):                                                           
         # Spawn good points (optional)
-        spawn_good_point_probability = 0.015 #CHANGE  
+        spawn_good_point_probability = self.good_prob 
         if random.random() < spawn_good_point_probability and len(self.good_points_group) < 5:
             good_point = GoodPoint()
             if self._check_obstacle_placement(good_point):
@@ -62,143 +76,140 @@ class Environment:
         return len(colides) ==0
 
     def AddGood(self):
-        # pointCollided=pygame.sprite.spritecollide(self.car,self.good_points_group,True)
-        # if len(pointCollided) != 0:
-        #     self.score+=1
-        # Custom collision detection for coins
         if len(pygame.sprite.spritecollide(self.car,self.good_points_group,True)) !=0:
              self.score += 1  # Increment the score
-             return True
-        return False
-        # for sprite in self.good_points_group:
-        #     rect = sprite.rect
-
+             self.reward+=self.coin_reward
+        
     def reset(self):#for AI, we dont need screen,  print is good enough.
-        from game import game
         print(self.score)
-        game.loop()
-
-    # def state(self):
-    #     state_list = []
-
-    #     # 1. Car's Lane
-    #     state_list.append((self.car.lane+1)/10)  # Add the car's lane 0-4
-    #     #state_list.append((self.car.rect.top)/700)
-    #     # 2. Obstacle Positions
-    #     for obstacle in self.obstacles_group:
-    #         state_list.append((obstacle.lane)/10)  # X-coordinate of obstacle
-    #         state_list.append((self.car.rect.top-obstacle.rect.bottom)/700)  # Y-coordinate of obstacle
-    #     while (len(state_list)<9):
-    #         state_list.append(0)  
-    #         state_list.append(0)  
-    #     # 3. Good Point Positions
-    #     for good_point in GoodPoint.indecis:
-    #         if good_point:
-    #             state_list.append((good_point.lane)/10)  # X-coordinate of good point
-    #             state_list.append((self.car.rect.top-good_point.rect.bottom)/700)  # Y-coordinate of good point
-    #         else:   
-    #             state_list.append(0)  
-    #             state_list.append(0)  
-    #     return torch.tensor(state_list, dtype=torch.float32)
+        # game.loop()
     
     def state(self):
-        state_list = []
-        # 1. Car's Lane
-        state_list.append((self.car.lane+1)/10)  # Add the car's lane 0-4
-        #state_list.append((self.car.rect.top)/700)
-        # 2. lane rewards
-        for lane in range(0,4):
-            state_list.append(self.Lane_Value(lane))
-  
-        return torch.tensor(state_list, dtype=torch.float32)
-    
-    def Lane_Value(self, lane):
         
-        value = 0 
-        Obstacles_In_Lane = []
+        lane_left = self.lane_encoding(max(self.car.lane-1, 0))  
+        lane_stay = self.lane_encoding(self.car.lane)  # Add the car's lane 1-5
+        lane_right = self.lane_encoding(min(self.car.lane+1, 4))  
+        
+        obj_front = [0,0,0,0,0]
         for obstacle in self.obstacles_group:
-            if obstacle.lane == lane:
-                Obstacles_In_Lane.append(obstacle)
+            lane = obstacle.lane
+            y = -max(obstacle.rect.bottom,0)/700
+            if abs(obj_front[lane]) < abs(y):
+                obj_front[lane] = y
 
-        # Check if there are no obstacles in the lane
-        if not Obstacles_In_Lane:
-            closest_obstacle = -100  # No obstacle in the lane, set to infinity
-            value = 0.5 # value if lane is clear
-        else:
-            # Find the closest obstacle (based on the 'y' coordinate)
-            closest_obstacle = max(obstacles.rect.y for obstacles in Obstacles_In_Lane)
-            distance = max(1, WINDOW_HEIGHT - closest_obstacle)/WINDOW_HEIGHT
-            value = -1.0 * (distance)
+        for coin in self.good_points_group:
+            lane = coin.lane
+            y = max(coin.rect.bottom,0)/700
+            if abs(obj_front[lane]) < abs(y):
+                obj_front[lane] = y
 
+        state_lst = lane_left + lane_stay + lane_right + obj_front
+        state = torch.tensor(state_lst, dtype=torch.float32)
+        state = state.unsqueeze(0) 
+        return state
 
-        # Check for good points in the lane and add value if conditions are met
-        for good_point in self.good_points_group:
-            if good_point.lane == lane and good_point.rect.y > closest_obstacle:
-                value += (good_point.rect.y/WINDOW_HEIGHT)  #closer coin= more value,max 1
-
-        return value
-    def Lane_Reward(self, lane=None):
-        if lane is None:
-            lane = self.car.lane
-        reward = 0 
-        Obstacles_In_Lane = []
-        for obstacle in self.obstacles_group:
-            if obstacle.lane == lane:
-                Obstacles_In_Lane.append(obstacle)
-
-        # Check if there are no obstacles in the lane
-        if not Obstacles_In_Lane:
-            closest_obstacle = -100  # No obstacle in the lane, set to infinity
-            reward = 0.4  # Reward if lane is clear
-        else:
-            # Find the closest obstacle (based on the 'y' coordinate)
-            reward=-len(Obstacles_In_Lane)# more obstacles= more riskieness = less reward , normalized
-            closest_obstacle = max(obstacles.rect.y for obstacles in Obstacles_In_Lane)
-
-        # Check for good points in the lane and add reward if conditions are met
-        for good_point in self.good_points_group:
-            if good_point.lane == lane and good_point.rect.y > closest_obstacle:
-                reward += (good_point.rect.y/WINDOW_HEIGHT)*2.5  #closer coin= more reward
-
-        return reward
-    
     def update (self,action):
         self.reward=0
-        self.reward+=self.Lane_Reward(self.car.lane)
+        # self.score +=0.1
         prev_lane=self.car.lane
         self.move(action=action)
         if self.car.lane != prev_lane:
-            self.reward=self.reward-0.005#car change lane reward
-        ### Add obstacles and coins to screen
+            self.reward=self.reward-self.change_line_reward #car change lane reward
         self.add_obstacle()
         self.add_coins()
-        ###
-        ### Update game objects
+        
+        # Update game objects
         self.car.update()
         self.obstacles_group.update()
         self.good_points_group.update()
-        ###
-        
-        if(self.AddGood()):
-            self.reward+=1#coin reward
-        if not self.car_colide():return (True,-1)#lose reward
-        ### Remove off screen obstacles and coins
-        for obstacle in self.obstacles_group:
-            if obstacle.rect.top > 800 :
-                obstacle.kill()
-                self.obstacles_group.remove(obstacle)
-                self.reward+=0.01
-        for GoodPoint in self.good_points_group:
-
-            if GoodPoint.rect.top > 800 :
-                GoodPoint.kill()
-                self.good_points_group.remove(GoodPoint)
-        self.reward = self.reward / (1.0 + abs(self.reward))
+        self.AddGood()
+        if not self.car_colide():
+           return (True,self.lose_reward)  #lose reward
+                
         return (False,self.reward)
-
-                 
         
+    def lane_to_one_hot (self, lane):
+        lane_lst = [0] * 5
+        lane_lst[lane] = 1
+        return lane_lst
+
+    def lane_encoding (self, lane):
+        lane_lst = [0] * 5
+
+        lane_lst[lane] = 5
+        for i in range(1, 5):
+            if lane - i >= 0:
+                lane_lst[lane-i] = 4-i    
+            if lane + i <= 4:
+                lane_lst[lane+i] = 4-i
         
+        return lane_lst
+        
+    def one_hot_to_lane (self, lane_lst):
+        return lane_lst.index(1)
 
-    
+    def immediate_reward (self, state, action):
+        obj = state[0,15:20]
+        lane = self.car.lane
+        after_lane = min(max(lane + action,0),4)
+        reward_state = obj[lane]
+        reward_after_state = obj[after_lane]
 
+        reward = 0
+       
+        if action == 0:
+            if reward_state < 0:    # Obstacle
+                reward = -self.i_reward
+            elif reward_state > 0:  # coin
+                reward = self.i_reward
+            else:                   # empty don't stay on the lane
+                reward = 0
+
+        else:
+            if reward_state > 0 and reward_after_state > 0: # coin -> coin
+                if reward_after_state > reward_state:
+                    reward = self.i_reward / 5
+                else:
+                    reward = -self.i_reward / 5
+            elif reward_state > 0 and reward_after_state < 0: # coin -> obsticale
+                reward = -self.i_reward * 2
+            elif reward_state > 0 and reward_after_state == 0: # coin -> empty
+                reward = -self.i_reward
+            elif reward_state < 0 and reward_after_state < 0: # obsticale -> obsticale
+                if reward_after_state > reward_state:
+                    reward = -self.i_reward / 10
+                else:
+                    reward = -self.i_reward / 5
+            elif reward_state < 0 and reward_after_state > 0: # obsticale -> coin
+                reward = self.i_reward * 2
+            elif reward_state < 0 and reward_after_state == 0: # obsticale -> empty
+                reward = self.i_reward
+            elif reward_state == 0 and reward_after_state < 0: # empty -> obsticale
+                reward = -self.i_reward
+            elif reward_state == 0 and reward_after_state > 0: # empty -> coin
+                reward = self.i_reward * 2
+            elif reward_state == 0 and reward_after_state == 0: # empty -> empty
+                reward = 0
+
+        return reward
+
+    def immediate_reward_simple (self, state, action):
+        obj = state[0,15:20]
+        lane = self.car.lane
+        after_lane = min(max(lane + action,0),4)
+        reward_state = obj[lane]
+        reward_after_state = obj[after_lane]
+
+        if reward_after_state > 0:
+            return self.i_reward
+        elif reward_after_state < 0:
+            return -self.i_reward
+        else:
+            return 0
+
+    def new_game(self):
+        self.car.lane = 2
+        self.obstacles_group = pygame.sprite.Group()
+        self.good_points_group= pygame.sprite.Group()
+        self.score=0
+        GoodPoint.indecis = [None] * 5
