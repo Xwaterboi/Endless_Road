@@ -136,7 +136,7 @@ class Environment:
     def lane_encoding (self, lane):
         lane_lst = [0] * 5
 
-        lane_lst[lane] = 5
+        lane_lst[lane] = 4 
         for i in range(1, 5):
             if lane - i >= 0:
                 lane_lst[lane-i] = 4-i    
@@ -168,9 +168,9 @@ class Environment:
         else:
             if reward_state > 0 and reward_after_state > 0: # coin -> coin
                 if reward_after_state > reward_state:
-                    reward = self.i_reward / 5
+                    reward = self.i_reward /2
                 else:
-                    reward = -self.i_reward / 5
+                    reward = -self.i_reward / 2
             elif reward_state > 0 and reward_after_state < 0: # coin -> obsticale
                 reward = -self.i_reward * 2
             elif reward_state > 0 and reward_after_state == 0: # coin -> empty

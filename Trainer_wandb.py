@@ -27,14 +27,9 @@ def main (chkpt):
     background = Background(WINDOWWIDTH, WINDOWHEIGHT) 
     env = Environment(chkpt)
     best_score = 0
-    if torch.cuda.is_available():
-        device = torch.device('cuda')
-        print("CUDA")
-    else:
-        device = torch.device('cpu')
-        print("CPU")
-    
+      
     #region###### params and models ############
+    #device=torch.device('cpu')
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     dqn_model = DQN(device=device)
     # dqn_model.load_params(MODEL_PATH)
@@ -218,9 +213,9 @@ def main (chkpt):
         
 if __name__ == "__main__":
     if not os.path.exists("Data/checkpoit_num"):
-        torch.save(101, "Data/checkpoit_num")    
+        torch.save(401, "Data/checkpoit_num")    
     
     chkpt = torch.load("Data/checkpoit_num", weights_only=False)
-    chkpt += 1
+    chkpt +=1
     torch.save(chkpt, "Data/checkpoit_num")    
     main (chkpt)
