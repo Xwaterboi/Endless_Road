@@ -5,7 +5,7 @@ import torch
 
 
 class Environment:
-    def __init__(self, chkpt = 1) -> None:
+    def __init__(self, chkpt = 1,diff='Normal') -> None:
         self.car = Car(2)
         self.obstacles_group = pygame.sprite.Group()
         self.good_points_group= pygame.sprite.Group()
@@ -21,8 +21,15 @@ class Environment:
         self.car_top = 590
         self.Max_obstacle = 5
         self.Max_GoodPoints = 5
-        self.obs_prob = 0.015
-        self.good_prob = 0.015
+        if diff == 'Normal':
+            self.obs_prob = 0.015
+            self.good_prob = 0.015
+        elif diff == 'Hard':
+            self.obs_prob = 0.02
+            self.good_prob = 0.01
+        else:
+            self.obs_prob = 0.01
+            self.good_prob = 0.02
     def move (self, action):
         lane = self.car.lane
         if action == 1 and lane < 4:
@@ -61,9 +68,9 @@ class Environment:
             else:
                 obstacle.kill()
 
-    def add_coins (self):                                                           
+    def add_coins (self):                                                           ###### Gilad
         # Spawn good points (optional)
-        spawn_good_point_probability = self.good_prob 
+        spawn_good_point_probability = self.good_prob #CHANGE  
         if random.random() < spawn_good_point_probability and len(self.good_points_group) < 5:
             good_point = GoodPoint()
             if self._check_obstacle_placement(good_point):
@@ -136,7 +143,7 @@ class Environment:
     def lane_encoding (self, lane):
         lane_lst = [0] * 5
 
-        lane_lst[lane] = 4 
+        lane_lst[lane] = 4
         for i in range(1, 5):
             if lane - i >= 0:
                 lane_lst[lane-i] = 4-i    
@@ -168,9 +175,9 @@ class Environment:
         else:
             if reward_state > 0 and reward_after_state > 0: # coin -> coin
                 if reward_after_state > reward_state:
-                    reward = self.i_reward /2
+                    reward = self.i_reward / 5
                 else:
-                    reward = -self.i_reward / 2
+                    reward = -self.i_reward / 5
             elif reward_state > 0 and reward_after_state < 0: # coin -> obsticale
                 reward = -self.i_reward * 2
             elif reward_state > 0 and reward_after_state == 0: # coin -> empty

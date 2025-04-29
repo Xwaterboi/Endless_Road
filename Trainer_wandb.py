@@ -29,11 +29,11 @@ def main (chkpt):
     best_score = 0
       
     #region###### params and models ############
-    #device=torch.device('cpu')
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device=torch.device('cpu')
+    #device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     dqn_model = DQN(device=device)
     # dqn_model.load_params(MODEL_PATH)
-    print("Model loaded successfully!")
+    #print("Model loaded successfully!")
     player = AI_Agent(dqn_model,device=device)
     player_hat = AI_Agent(dqn_model,device=device)
     player_hat.dqn_model = player.dqn_model.copy()

@@ -116,9 +116,6 @@ class Background:
         if play_again_button.collidepoint(mouse_pos):
             if mouse_pressed[0]:  # Left click
                 return 1
-                
-                print(self.score)
-                game.loop()
 
 
         if quit_button.collidepoint(mouse_pos):
