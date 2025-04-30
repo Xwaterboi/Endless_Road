@@ -53,11 +53,15 @@ class Background:
         self.draw_dashed_lines()
 
     
-    def render(self, env):
+    def render(self, env,IsTrainer=False):
         self.draw_surface()  # Redraw scrolling background
        
+        
         # Draw the score
-        text = f"Score: {str(round(env.score))} chkpt: {str(env.chkpt)} "
+        if IsTrainer:
+            text = f"Score: {str(round(env.score))} chkpt: {str(env.chkpt)} "
+        else:
+            text = f"Score: {str(round(env.score))}"
         self.write(surface=self.header_surf, text=text)
 
         env.obstacles_group.draw(self.surface)
@@ -108,20 +112,24 @@ class Background:
         # Update the display
         pygame.display.flip()
 
-        # Event handling for buttons
-        mouse_pos = pygame.mouse.get_pos()
-        mouse_pressed = pygame.mouse.get_pressed()
+        
 
-        # Check if the mouse clicks on any button
-        if play_again_button.collidepoint(mouse_pos):
-            if mouse_pressed[0]:  # Left click
-                return 1
-
-
-        if quit_button.collidepoint(mouse_pos):
-            if mouse_pressed[0]:  # Left click
-                pygame.quit()
-                exit()  # Call the quit callback function
+        waiting_for_input = True
+        while waiting_for_input:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # Left click
+                    mouse_pos = pygame.mouse.get_pos()
+                    if play_again_button.collidepoint(mouse_pos):
+                        return 1  # Signal to start a new game
+                    elif quit_button.collidepoint(mouse_pos):
+                        pygame.quit()
+                        exit()
+            
+            # Maintain frame rate while waiting
+            pygame.time.Clock().tick(30)
 
             
     

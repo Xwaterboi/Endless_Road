@@ -22,8 +22,8 @@ class Environment:
         self.Max_obstacle = 5
         self.Max_GoodPoints = 5
         if diff == 'Normal':
-            self.obs_prob = 0.015
-            self.good_prob = 0.015
+            self.obs_prob = 0.0125
+            self.good_prob = 0.0125
         elif diff == 'Hard':
             self.obs_prob = 0.02
             self.good_prob = 0.01
@@ -114,6 +114,7 @@ class Environment:
         state = torch.tensor(state_lst, dtype=torch.float32)
         state = state.unsqueeze(0) 
         return state
+    
 
     def update (self,action):
         self.reward=0

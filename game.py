@@ -40,13 +40,15 @@ class Game:
 
     def start_new_game(self):
         """Start a new game session."""
+        startscreen=MenuScreen(WINDOWWIDTH, WINDOWHEIGHT)
+        self.settings=startscreen.run()
         self.loop()
+
 
     def loop(self):
         """Main game loop."""
         #self.score = 0
-        startscreen=MenuScreen(WINDOWWIDTH, WINDOWHEIGHT)
-        self.settings=startscreen.run()
+        
         background = Background(WINDOWWIDTH, WINDOWHEIGHT)
         env = Environment(diff=self.settings['difficulty'])
         background.render(env)
@@ -58,8 +60,8 @@ class Game:
         else:
             player= Human_Agent()
             playertype=2
-        self.duration = 30000
-        start_time = pygame.time.get_ticks()
+        #self.duration = 30000
+        #start_time = pygame.time.get_ticks()
 
         run = True
         win = False
@@ -74,33 +76,30 @@ class Game:
                     pygame.quit()
                     exit()
 
-            elapsed_time = pygame.time.get_ticks() - start_time
+            #elapsed_time = pygame.time.get_ticks() - start_time
 
             if env.score >= 5:
-                print("5 points! You win!")
+                #print("5 points! You win!")
                 win = True
 
             state = env.state()
-            if playertype ==1:
+            if self.settings['agent_type']=='AI':
                 action = player.getAction(events=events, state=env.state())#AI
             else: 
                 action=player.getAction(events=events)#human
             #env.move(action=action)
             done,reward = env.update(action=action) or win
 
-            if done:
-                
-                
-                if  playertype==2:
+            if done:# or win:
+                if  self.settings['agent_type']!='AI':
+                    pygame.event.clear(pygame.MOUSEBUTTONDOWN)
                     play_again = background.end_screen()
                     print(f"Score: {env.score}")
                     if play_again ==1:
-                        self.start_new_game()  
+                        self.loop()  
                 else:
                     print(f"Score: {env.score}")
-                    self.start_new_game()
-
-                
+                    self.loop()
             else:
                 background.render(env)
 

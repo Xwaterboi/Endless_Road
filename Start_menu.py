@@ -15,7 +15,7 @@ class MenuScreen:
         self.GRAY = (150, 150, 150)
         self.BLUE = (0, 102, 204)
         self.GREEN = (0, 153, 0)
-        self.RED = (204, 0, 0)
+        self.RED = (250, 0, 0)
         self.YELLOW = (255, 255, 0)
         
         # Fonts
@@ -29,6 +29,11 @@ class MenuScreen:
         self.selected_option = 0  # 0: Difficulty, 1: Agent, 2: Start
         self.menu_options = ['Difficulty', 'Agent', 'Start Game']
         
+        # Store button positions for touch support
+        self.difficulty_buttons = []  # Will store rects for Easy, Normal, Hard buttons
+        self.agent_buttons = []       # Will store rects for AI, Human buttons
+        self.start_button = None      # Will store rect for Start Game button
+        
         # Load sound effects (optional)
         # try:
         #     mixer.init()
@@ -38,16 +43,9 @@ class MenuScreen:
         # except:
         self.sound_loaded = False
             
-        # Load background image (optional)
-        try:
-            self.bg_image = pygame.image.load('assets/menu_bg.png')
-            self.bg_image = pygame.transform.scale(self.bg_image, (width, height))
-            self.bg_loaded = True
-        except:
-            self.bg_loaded = False
+        self.car_image = pygame.image.load('pics/car.png').convert_alpha()
+        self.bg_loaded = False
         
-    
-    
     def draw_text(self, text, font, color, x, y, center=True):
         text_surface = font.render(text, True, color)
         text_rect = text_surface.get_rect()
@@ -59,30 +57,33 @@ class MenuScreen:
         
     def draw_button(self, text, x, y, width, height, selected=False):
         color = self.BLUE if selected else self.GRAY
-        pygame.draw.rect(self.screen, color, (x, y, width, height), border_radius=10)
-        pygame.draw.rect(self.screen, self.WHITE, (x, y, width, height), 2, border_radius=10)
+        button_rect = pygame.Rect(x, y, width, height)
+        pygame.draw.rect(self.screen, color, button_rect, border_radius=10)
+        pygame.draw.rect(self.screen, self.WHITE, button_rect, 2, border_radius=10)
         self.draw_text(text, self.option_font, self.WHITE, x + width // 2, y + height // 2)
+        return button_rect
         
     def draw_selector(self, option, x, y, width, selected=False):
+        button_rects = []
+        
         if option == 'Difficulty':
             difficulties = ['Easy', 'Normal', 'Hard']
             for i, diff in enumerate(difficulties):
                 button_x = x + i * (width // 3)
                 button_w = width // 3 - 10
                 color = self.GREEN if diff == 'Easy' else self.BLUE if diff == 'Normal' else self.RED
+                button_rect = pygame.Rect(button_x, y, button_w, 40)
+                
                 if diff == self.difficulty:
-                    pygame.draw.rect(self.screen, color, 
-                                     (button_x, y, button_w, 40), border_radius=5)
-                    pygame.draw.rect(self.screen, self.WHITE, 
-                                     (button_x, y, button_w, 40), 2, border_radius=5)
+                    pygame.draw.rect(self.screen, color, button_rect, border_radius=5)
+                    pygame.draw.rect(self.screen, self.WHITE, button_rect, 2, border_radius=5)
                 else:
-                    pygame.draw.rect(self.screen, self.GRAY, 
-                                     (button_x, y, button_w, 40), border_radius=5)
-                    pygame.draw.rect(self.screen, self.WHITE, 
-                                     (button_x, y, button_w, 40), 1, border_radius=5)
+                    pygame.draw.rect(self.screen, self.GRAY, button_rect, border_radius=5)
+                    pygame.draw.rect(self.screen, self.WHITE, button_rect, 1, border_radius=5)
                     
                 self.draw_text(diff, self.option_font, self.WHITE, 
                                button_x + button_w // 2, y + 20)
+                button_rects.append((button_rect, diff))
                 
         elif option == 'Agent':
             agents = ['AI', 'Human']
@@ -90,20 +91,20 @@ class MenuScreen:
                 button_x = x + i * (width // 2)
                 button_w = width // 2 - 10
                 color = self.BLUE if agent == self.agent_type else self.GRAY
+                button_rect = pygame.Rect(button_x, y, button_w, 40)
                 
                 if agent == self.agent_type:
-                    pygame.draw.rect(self.screen, color, 
-                                     (button_x, y, button_w, 40), border_radius=5)
-                    pygame.draw.rect(self.screen, self.WHITE, 
-                                     (button_x, y, button_w, 40), 2, border_radius=5)
+                    pygame.draw.rect(self.screen, color, button_rect, border_radius=5)
+                    pygame.draw.rect(self.screen, self.WHITE, button_rect, 2, border_radius=5)
                 else:
-                    pygame.draw.rect(self.screen, self.GRAY, 
-                                     (button_x, y, button_w, 40), border_radius=5)
-                    pygame.draw.rect(self.screen, self.WHITE, 
-                                     (button_x, y, button_w, 40), 1, border_radius=5)
+                    pygame.draw.rect(self.screen, self.GRAY, button_rect, border_radius=5)
+                    pygame.draw.rect(self.screen, self.WHITE, button_rect, 1, border_radius=5)
                 
                 self.draw_text(agent, self.option_font, self.WHITE, 
                                button_x + button_w // 2, y + 20)
+                button_rects.append((button_rect, agent))
+        
+        return button_rects
     
     def draw_menu(self):
         # Draw background
@@ -122,16 +123,12 @@ class MenuScreen:
                 
         # Title with shadow effect
         self.draw_text("Endless Road", self.title_font, self.BLACK, self.width//2 + 3, 103)
-        self.draw_text("Endless Road", self.title_font, self.YELLOW, self.width//2, 100)
+        self.draw_text("Endless Road", self.title_font, self.RED, self.width//2, 100)
         
-        # Draw car icon
-        car_width, car_height = 60, 100
-        pygame.draw.rect(self.screen, (220, 20, 60), 
-                         (self.width//2 - car_width//2, 160, car_width, car_height), border_radius=10)
-        pygame.draw.rect(self.screen, (50, 50, 50), 
-                         (self.width//2 - car_width//2 + 10, 180, car_width - 20, 30))
-        pygame.draw.rect(self.screen, (50, 50, 50), 
-                         (self.width//2 - car_width//2 + 10, 220, car_width - 20, 30))
+       
+        car_width, car_height = 80, 120
+        car_scaled = pygame.transform.scale(self.car_image, (car_width, car_height))
+        self.screen.blit(car_scaled, (self.width//2 - car_width//2, 160))
         
         # Options
         option_y = 300
@@ -139,22 +136,22 @@ class MenuScreen:
         # Difficulty option
         option_x = self.width // 2 - 150
         self.draw_text("DIFFICULTY:", self.option_font, self.WHITE, option_x, option_y, False)
-        self.draw_selector('Difficulty', option_x, option_y + 40, 300, self.selected_option == 0)
+        self.difficulty_buttons = self.draw_selector('Difficulty', option_x, option_y + 40, 300, self.selected_option == 0)
         
         # Agent option
         option_y += 120
         self.draw_text("AGENT TYPE:", self.option_font, self.WHITE, option_x, option_y, False)
-        self.draw_selector('Agent', option_x, option_y + 40, 300, self.selected_option == 1)
+        self.agent_buttons = self.draw_selector('Agent', option_x, option_y + 40, 300, self.selected_option == 1)
         
         # Start game button
         option_y += 120
         start_button_width = 200
         start_button_x = self.width // 2 - start_button_width // 2
-        self.draw_button("START GAME", start_button_x, option_y, start_button_width, 50, 
-                        self.selected_option == 2)
+        self.start_button = self.draw_button("START GAME", start_button_x, option_y, start_button_width, 50, 
+                            self.selected_option == 2)
         
         # Instructions
-        instructions = "Use arrow keys to navigate, ENTER to select"
+        instructions = "Use arrow keys or touch to navigate"
         self.draw_text(instructions, self.info_font, self.WHITE, self.width // 2, self.height - 40)
         
         # Difficulty info
@@ -166,11 +163,41 @@ class MenuScreen:
         
         self.draw_text(diff_info[self.difficulty], self.info_font, self.WHITE, 
                       self.width // 2, option_y - 30)
+    
+    def handle_touch(self, pos):
+        # Check if difficulty buttons were clicked
+        for button, difficulty in self.difficulty_buttons:
+            if button.collidepoint(pos):
+                self.difficulty = difficulty
+                self.selected_option = 0
+                return {'action': 'none'}
+        
+        # Check if agent buttons were clicked
+        for button, agent in self.agent_buttons:
+            if button.collidepoint(pos):
+                self.agent_type = agent
+                self.selected_option = 1
+                return {'action': 'none'}
+        
+        # Check if start button was clicked
+        if self.start_button and self.start_button.collidepoint(pos):
+            self.selected_option = 2
+            return {
+                'action': 'start',
+                'difficulty': self.difficulty,
+                'agent_type': self.agent_type
+            }
+            
+        return {'action': 'none'}
         
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return {'action': 'quit'}
+            
+            # Touch/mouse input handling    
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                return self.handle_touch(event.pos)
                 
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP:
@@ -212,6 +239,8 @@ class MenuScreen:
     
     def run(self):
         running = True
+        clock = pygame.time.Clock()
+        
         while running:
             self.screen.fill(self.BLACK)
             self.draw_menu()
@@ -224,7 +253,7 @@ class MenuScreen:
             elif result['action'] == 'start':
                 return result
             
-            #pygame.time.Clock().tick(60)
+            clock.tick(60)
 
 if __name__ == "__main__":
     # Test the menu screen independently

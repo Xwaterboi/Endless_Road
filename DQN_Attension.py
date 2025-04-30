@@ -16,7 +16,7 @@ class DQN (nn.Module):
         # Initialize embedding weights manually to stable, meaningful values
         # init_values = torch.tensor([[0.0625], [0.125], [0.25], [0.5], [1.0]], dtype=torch.float32)  # levels 0-4
         # init_values = torch.tensor([[0], [0], [0], [0], [0]], dtype=torch.float32)  # levels 0-4
-        # self.level_embedding.weight.data.copy_(init_values)
+        #self.level_embedding.weight.data.copy_(init_values)
         
         # FNN to map weighted values to Q-values
         self.fc1 = nn.Linear(5, 16)
