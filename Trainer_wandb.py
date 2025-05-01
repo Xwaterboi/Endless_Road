@@ -38,10 +38,10 @@ def main (chkpt):
     player = AI_Agent(dqn_model,device=device)
     player_hat = AI_Agent(dqn_model,device=device)
     player_hat.dqn_model = player.dqn_model.copy()
-    batch_size = 64
+    batch_size = 128
     buffer = ReplayBuffer(path=None)
-    learning_rate = 1e-5
-    ephocs = 500
+    learning_rate = 3e-5
+    ephocs = 2000
     start_epoch = 0
     C = 5
     loss = torch.tensor(0)
@@ -173,6 +173,11 @@ def main (chkpt):
             loss.backward()
             torch.nn.utils.clip_grad_norm_(player.dqn_model.parameters(), max_norm=1.0)
             optim.step()
+            # if epoch % C==0:
+            #     with torch.no_grad():
+            #         weights=torch.abs(player.dqn_model.level_embedding.weight.data.view(-1))
+            #         sorted_weights, _ = torch.sort(weights)
+            #         player.dqn_model.level_embedding.weight.data.copy_(sorted_weights.view(-1, 1))
             optim.zero_grad()
             scheduler.step()
 

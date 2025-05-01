@@ -156,9 +156,9 @@ class MenuScreen:
         
         # Difficulty info
         diff_info = {
-            'Easy': "Few obstacles, easy to pick up coins",
+            'Easy': "Few obstacles, easy to pick up coins,slow",
             'Normal': "Balanced gameplay",
-            'Hard': "High obstacle density, fewer coins"
+            'Hard': "High obstacle density, fewer coins,fast"
         }
         
         self.draw_text(diff_info[self.difficulty], self.info_font, self.WHITE, 

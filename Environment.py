@@ -19,17 +19,21 @@ class Environment:
         self.chkpt = chkpt
         self.car_top_row = 118
         self.car_top = 590
-        self.Max_obstacle = 5
+        self.Max_obstacle = 4
         self.Max_GoodPoints = 5
+        self.speed = 6
         if diff == 'Normal':
             self.obs_prob = 0.0125
             self.good_prob = 0.0125
         elif diff == 'Hard':
             self.obs_prob = 0.02
             self.good_prob = 0.01
+            self.speed = 8
         else:
             self.obs_prob = 0.01
             self.good_prob = 0.02
+            self.speed = 10
+
     def move (self, action):
         lane = self.car.lane
         if action == 1 and lane < 4:
@@ -58,9 +62,8 @@ class Environment:
             return False # 5 or fewer points exist
         
     def add_obstacle(self):
-        
         if random.random() < self.obs_prob:
-            obstacle = Obstacle()
+            obstacle = Obstacle(self.speed)
             #obstacle.rect.x = random.randrange(0, 400, 80)
             obstacle.rect.y = -obstacle.rect.height  # Spawn at the top of the screen
             if self._check_obstacle_placement(obstacle) and self.Max_obstacle_check() is False:
@@ -72,7 +75,7 @@ class Environment:
         # Spawn good points (optional)
         spawn_good_point_probability = self.good_prob #CHANGE  
         if random.random() < spawn_good_point_probability and len(self.good_points_group) < 5:
-            good_point = GoodPoint()
+            good_point = GoodPoint(self.speed)
             if self._check_obstacle_placement(good_point):
                 self.good_points_group.add(good_point)
             else:

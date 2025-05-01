@@ -15,7 +15,7 @@ pygame.init()
 FPS = 60
 WINDOWWIDTH = 400
 WINDOWHEIGHT = 800
-MODEL_PATH = None # "model/DQN.pth"  # Ensure cross-platform path
+MODEL_PATH = "model/DQN.pth"  # Ensure cross-platform path
 
 clock = pygame.time.Clock()
 background = Background(WINDOWWIDTH, WINDOWHEIGHT)
@@ -27,12 +27,8 @@ background.render(env)
 # Load DQN model
 dqn_model = DQN()
 
-if MODEL_PATH:
-    dqn_model.load_params(MODEL_PATH)
-    print("Model loaded successfully!")
 
 
-# player = AI_Agent(dqn_model)
 
 class Game:
     def __init__(self):
@@ -56,10 +52,8 @@ class Game:
         # Keep the same AI agent instance
         if self.settings['agent_type']=='AI':
             player = AI_Agent(dqn_model=dqn_model,train=False)
-            playertype=1
         else:
             player= Human_Agent()
-            playertype=2
         #self.duration = 30000
         #start_time = pygame.time.get_ticks()
 

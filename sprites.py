@@ -34,7 +34,7 @@ class Obstacle(pygame.sprite.Sprite):
     pic=pygame.image.load('pics/obstacle2.png')
     pics = [pygame.image.load('pics/obstacle.png'),pygame.image.load('pics/obstacle2.png'),pygame.image.load('pics/obstacle3.png')]
     
-    def __init__(self):
+    def __init__(self,speed):
         super().__init__()
         self.pic=Obstacle.pics[random.randint(0,2)]
         self.image = self.pic.convert_alpha()
@@ -43,7 +43,7 @@ class Obstacle(pygame.sprite.Sprite):
         self.lane=random.randint(0, 4)
         self.rect.x =  self.lane* LANEWIDTH    + (LANEWIDTH - self.rect.width) // 2 # Random lane
         self.rect.y = 0  #above the screen
-        self.speed = 5  # Speed at which the obstacle moves down
+        self.speed = speed  # Speed at which the obstacle moves down
 
     def update(self):
         self.rect.y += self.speed  # Move the obstacle down
@@ -57,7 +57,7 @@ class GoodPoint(pygame.sprite.Sprite):
     
     pics = [pygame.image.load('pics/coin.png'),pygame.image.load('pics/coin2.png'),pygame.image.load('pics/coin3.png')]
     
-    def __init__(self):
+    def __init__(self,speed):
         super().__init__()
         self.pic=GoodPoint.pics[random.randint(0,2)]
         self.image = self.pic.convert_alpha()  # Load good point image
@@ -66,7 +66,7 @@ class GoodPoint(pygame.sprite.Sprite):
         self.lane=random.randint(0, 4)
         self.rect.x = self.lane * LANEWIDTH + (LANEWIDTH - self.rect.width) // 2  # Random lane
         self.rect.y = 0  # Random height above the screen; random.randint(-200, -50)
-        self.speed = 5  # Speed at which the good point moves down
+        self.speed = speed  # Speed at which the good point moves down
         self.index = GoodPoint.indecis.index(None)
         GoodPoint.indecis[self.index] = self
 
