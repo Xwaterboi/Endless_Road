@@ -20,7 +20,7 @@ class DQN (nn.Module):
         
         # FNN to map weighted values to Q-values
         self.fc1 = nn.Linear(5, 16)
-        # self.fc2 = nn.Linear(64, 32)
+        #self.fc2 = nn.Linear(64, 32)
         self.out = nn.Linear(16, 1)  # 1 value per action Q(s, a)
 
         self.MSELoss = nn.MSELoss()
@@ -53,10 +53,7 @@ class DQN (nn.Module):
    
     def shared_branch(self, x):
         return x.sum(dim=1, keepdim=True)  # shape: [batch, 1]
-        # x = F.leaky_relu(self.fc1(x))
-        # x = F.leaky_relu(self.fc2(x))
-        # x = self.out(x) 
-        # return x
+        
     
     def loss (self, Q_values, rewards, Q_next_Values, dones ):
         Q_new = rewards.to(self.device) + gamma * Q_next_Values.to(self.device) * (1- dones.to(self.device))

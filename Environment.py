@@ -23,16 +23,16 @@ class Environment:
         self.Max_GoodPoints = 5
         self.speed = 6
         if diff == 'Normal':
-            self.obs_prob = 0.0125
+            self.obs_prob = 0.01
             self.good_prob = 0.0125
         elif diff == 'Hard':
             self.obs_prob = 0.02
             self.good_prob = 0.01
-            self.speed = 8
-        else:
-            self.obs_prob = 0.01
-            self.good_prob = 0.02
             self.speed = 10
+        else:#easy
+            self.obs_prob = 0.0095
+            self.good_prob = 0.02
+            self.speed = 4
 
     def move (self, action):
         lane = self.car.lane

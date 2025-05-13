@@ -4,8 +4,8 @@ from graphics import Background
 from Environment import Environment
 from ReplayBuffer import ReplayBuffer
 # from ReplayBuffer_n_step import ReplayBuffer_n_step as ReplayBuffer
-#from AI_Agent import AI_Agent
-from AI_Agent_No_Exp import AI_Agent
+from AI_Agent import AI_Agent
+#from AI_Agent_No_Exp import AI_Agent
 # from AI_Agent_softmax import AI_Agent
 # from DuelingDQN import DQN
 # from DQN import DQN
