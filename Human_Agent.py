@@ -5,7 +5,7 @@ class Human_Agent:
     def __init__(self) -> None:
         pass
 
-    def getAction (self, events):#, state
+    def getAction (self, events):
         
         for event in events:
             if event.type == pygame.KEYDOWN:

@@ -17,7 +17,6 @@ class AI_Agent:
         res = max(self.final, self.start - (self.start - self.final) * epoch/self.decay )
         return res
     
-    
     def getAction(self, state, epoch = 0, events= None, train = True):
         """Get the action based 
         on the DQN output."""

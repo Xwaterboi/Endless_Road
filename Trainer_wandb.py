@@ -3,9 +3,9 @@ import numpy as np
 from graphics import Background
 from Environment import Environment
 from ReplayBuffer import ReplayBuffer
-# from ReplayBuffer_n_step import ReplayBuffer_n_step as ReplayBuffer
-from AI_Agent import AI_Agent
-#from AI_Agent_No_Exp import AI_Agent
+#from ReplayBuffer_n_step import ReplayBuffer_n_step as ReplayBuffer
+#from AI_Agent import AI_Agent
+from AI_Agent_No_Exp import AI_Agent
 # from AI_Agent_softmax import AI_Agent
 # from DuelingDQN import DQN
 # from DQN import DQN
@@ -167,7 +167,7 @@ def main (chkpt):
             Q_hat_Values = player_hat.Q(next_states,next_actions) # DDQN
             
             # _, Q_hat_Values = player_hat.get_Actions_Values(next_states) # DQN
-
+            
 
             loss = player.dqn_model.loss(Q_values, rewards, Q_hat_Values, dones)
             loss.backward()
@@ -212,11 +212,7 @@ def main (chkpt):
             torch.save(buffer, buffer_path)
             
         #endregion
-
-
-
-
-        
+     
 if __name__ == "__main__":
     if not os.path.exists("Data/checkpoit_num"):
         torch.save(401, "Data/checkpoit_num")    

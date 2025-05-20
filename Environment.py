@@ -71,7 +71,7 @@ class Environment:
             else:
                 obstacle.kill()
 
-    def add_coins (self):                                                           ###### Gilad
+    def add_coins (self): 
         # Spawn good points (optional)
         spawn_good_point_probability = self.good_prob #CHANGE  
         if random.random() < spawn_good_point_probability and len(self.good_points_group) < 5:
@@ -81,7 +81,7 @@ class Environment:
             else:
                 good_point.kill()
 
-    def car_colide(self) -> bool :
+    def car_colide(self):
         colides = pygame.sprite.spritecollide(self.car,self.obstacles_group,False)
         return len(colides) ==0
 
@@ -89,15 +89,11 @@ class Environment:
         if len(pygame.sprite.spritecollide(self.car,self.good_points_group,True)) !=0:
              self.score += 1  # Increment the score
              self.reward+=self.coin_reward
-        
-    def reset(self):#for AI, we dont need screen,  print is good enough.
-        print(self.score)
-        # game.loop()
-    
+
     def state(self):
         
         lane_left = self.lane_encoding(max(self.car.lane-1, 0))  
-        lane_stay = self.lane_encoding(self.car.lane)  # Add the car's lane 1-5
+        lane_stay = self.lane_encoding(self.car.lane)  
         lane_right = self.lane_encoding(min(self.car.lane+1, 4))  
         
         obj_front = [0,0,0,0,0]
@@ -118,7 +114,6 @@ class Environment:
         state = state.unsqueeze(0) 
         return state
     
-
     def update (self,action):
         self.reward=0
         # self.score +=0.1
