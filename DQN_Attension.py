@@ -53,8 +53,7 @@ class DQN (nn.Module):
    
     def shared_branch(self, x):
         return x.sum(dim=1, keepdim=True)  # shape: [batch, 1]
-        
-    
+         
     def loss (self, Q_values, rewards, Q_next_Values, dones ):
         Q_new = rewards.to(self.device) + gamma * Q_next_Values.to(self.device) * (1- dones.to(self.device))
         return self.MSELoss(Q_values, Q_new)

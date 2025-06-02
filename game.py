@@ -6,7 +6,7 @@ from Environment import Environment
 from Start_menu import MenuScreen
 from Human_Agent import Human_Agent
 # from Random_Agent import Random_Agent
-from AI_Agent import AI_Agent
+from AI_Agent_No_Exp import AI_Agent
 from DQN_Attension import DQN
 import torch
 pygame.init()

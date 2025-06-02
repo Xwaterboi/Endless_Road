@@ -103,11 +103,7 @@ def main (chkpt):
     tester = Tester(player,env)
 
     for epoch in range(start_epoch, ephocs):
-        # if epoch % 100 == 0:
-        #     print("\nstart test ...")
-        #     tester_step, tester_score = tester.test(num_games=10)
-        #     wandb.log ({"tester_step": tester_step, "tester_score":tester_score })
-        #     print(f"tester_step: {tester_step}  tester_score: {tester_score}")
+        
         step = 0
         clock = pygame.time.Clock()
         env.new_game()

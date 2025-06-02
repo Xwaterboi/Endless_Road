@@ -116,7 +116,6 @@ class Environment:
     
     def update (self,action):
         self.reward=0
-        # self.score +=0.1
         prev_lane=self.car.lane
         self.move(action=action)
         if self.car.lane != prev_lane:
