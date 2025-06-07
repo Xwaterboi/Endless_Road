@@ -51,8 +51,8 @@ def main (chkpt):
     scores, losses, avg_score = [], [], []
     # optim = torch.optim.Adam(player.dqn_model.parameters(), lr=learning_rate, weight_decay=1e-4)
     optim = torch.optim.AdamW(player.dqn_model.parameters(), lr=learning_rate, weight_decay=1e-3)
-    # scheduler = torch.optim.lr_scheduler.StepLR(optim,100000, gamma=0.50)
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optim,[1000*200, 3000*200, 5000*200], gamma=0.9)
+    scheduler = torch.optim.lr_scheduler.StepLR(optim,100000, gamma=0.9)
+    #scheduler = torch.optim.lr_scheduler.MultiStepLR(optim,[1000*200, 3000*200, 5000*200], gamma=0.9)
     step = 0
     #endregion
     #region######## checkpoint Load ############
