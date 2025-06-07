@@ -4,9 +4,9 @@ from graphics import Background
 from Environment import Environment
 from ReplayBuffer import ReplayBuffer
 #from ReplayBuffer_n_step import ReplayBuffer_n_step as ReplayBuffer
-#from AI_Agent import AI_Agent
-from AI_Agent_No_Exp import AI_Agent
-# from AI_Agent_softmax import AI_Agent
+from AI_Agent import AI_Agent
+#from AI_Agent_No_Exp import AI_Agent
+#from AI_Agent_softmax import AI_Agent
 # from DuelingDQN import DQN
 # from DQN import DQN
 from DQN_Attension import DQN
@@ -23,7 +23,8 @@ def main (chkpt):
     WINDOWWIDTH = 400
     WINDOWHEIGHT = 800
     MIN_BUFFER=500
-    MODEL_PATH = "model/DQN.pth"  # Ensure cross-platform path
+    MODEL_PATH = f"model/DQN{chkpt}.pth"  # Modified to include checkpoint number
+    OLD_MODEL_PATH = f"model/DQN{463}.pth"  # Modified to include checkpoint number
     clock = pygame.time.Clock()
     background = Background(WINDOWWIDTH, WINDOWHEIGHT) 
     env = Environment(chkpt)
@@ -33,14 +34,14 @@ def main (chkpt):
     device=torch.device('cpu')
     #device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     dqn_model = DQN(device=device)
-    # dqn_model.load_params(MODEL_PATH)
+    #dqn_model.load_params(MODEL_PATH)
     #print("Model loaded successfully!")
     player = AI_Agent(dqn_model,device=device)
     player_hat = AI_Agent(dqn_model,device=device)
     player_hat.dqn_model = player.dqn_model.copy()
     batch_size = 128
     buffer = ReplayBuffer(path=None)
-    learning_rate = 3e-5
+    learning_rate = 3e-4
     ephocs = 2000
     start_epoch = 0
     C = 5
@@ -131,6 +132,8 @@ def main (chkpt):
                     }
                     torch.save(checkpoint, checkpoint_path)
                     torch.save(buffer, buffer_path)
+                    # Save the DQN model separately with checkpoint number
+                    torch.save(player.dqn_model.state_dict(), MODEL_PATH)
                     pygame.quit()
                     return
             
@@ -206,12 +209,17 @@ def main (chkpt):
             }
             torch.save(checkpoint, checkpoint_path)
             torch.save(buffer, buffer_path)
+            # Save the DQN model separately with checkpoint number every 500 epochs
+            torch.save(player.dqn_model.state_dict(), MODEL_PATH)
             
         #endregion
+
+    # Save the final DQN model at the end of training
+    torch.save(player.dqn_model.state_dict(), MODEL_PATH)
      
 if __name__ == "__main__":
     if not os.path.exists("Data/checkpoit_num"):
-        torch.save(401, "Data/checkpoit_num")    
+        torch.save(460, "Data/checkpoit_num")    
     
     chkpt = torch.load("Data/checkpoit_num", weights_only=False)
     chkpt +=1
