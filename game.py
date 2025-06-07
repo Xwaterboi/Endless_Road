@@ -46,7 +46,7 @@ class Game:
         if self.settings['agent_type']=='AI':
             # Load DQN model
             dqn_model = DQN()
-            model_path = "model/DQN469.pth"  # good model
+            model_path = "model/GOOD469.pth"  # good model
             dqn_model.load_state_dict(torch.load(model_path, map_location='cpu'))
             player = AI_Agent(dqn_model=dqn_model,train=False)
         else:

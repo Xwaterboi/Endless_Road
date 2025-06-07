@@ -87,7 +87,7 @@ def main (chkpt):
         "name": f"Endless_Road {num}",
         "checkpoint": checkpoint_path,
         "learning_rate": learning_rate,
-        "Schedule": f'{str(scheduler.milestones)} gamma={str(scheduler.gamma)}',
+        #"Schedule": f'{str(scheduler.milestones)} gamma={str(scheduler.gamma)}',
         "epochs": ephocs,
         "start_epoch": start_epoch,
         "decay": 50,
